@@ -61,6 +61,9 @@ void CBackend::Invalidate()
     vb = 0;
     ib = 0;
     vb_stride = 0;
+#ifdef USE_OGL
+    vb_base_vertex = 0;
+#endif
 
     state = nullptr;
     ps = 0;

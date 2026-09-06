@@ -18,6 +18,10 @@ option(XRAY_USE_LUAJIT   "Use LuaJIT"                 ON)
 option(XRAY_USE_ASAN     "Use AddressSanitizer"       OFF)
 option(XRAY_ENABLE_TRACY "Enable tracy profiler"      OFF)
 
+if (NOT XRAY_USE_LUAJIT)
+    add_compile_definitions(XRAY_NO_LUAJIT)
+endif()
+
 include(XRay.Build)
 include(XRay.Packaging)
 

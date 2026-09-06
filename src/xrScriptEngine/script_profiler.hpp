@@ -6,6 +6,10 @@
 #include "ScriptExporter.hpp"
 #include "script_profiler_portions.hpp"
 
+#ifdef XRAY_NO_LUAJIT
+typedef void (*luaJIT_profile_callback)(void* data, lua_State* L, int samples, int vmstate);
+#endif
+
 enum class CScriptProfilerType : u32
 {
     None = 0,

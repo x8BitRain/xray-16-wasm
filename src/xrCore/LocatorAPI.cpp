@@ -1363,6 +1363,10 @@ void CLocatorAPI::check_cached_files(pstr fname, const size_t& fname_size, const
 
 void CLocatorAPI::file_from_cache_impl(IReader*& R, pstr fname, const file& desc)
 {
+#ifdef XR_PLATFORM_WEB
+    R = xr_new<CFileReader>(fname); // no memory mapping on WasmFS
+    return;
+#endif
     if (desc.size_real < 16 * 1024)
     {
         R = xr_new<CFileReader>(fname);
@@ -1393,6 +1397,22 @@ void CLocatorAPI::file_from_archive(IReader*& R, pcstr fname, const file& desc)
 {
     // Archived one
     archive& A = m_archives[desc.vfs];
+#ifdef XR_PLATFORM_WEB
+    // WasmFS has no real memory mapping; read the entry directly
+    u8* compressed = xr_alloc<u8>(desc.size_compressed);
+    const ssize_t bytesRead = pread(A.hSrcFile, compressed, desc.size_compressed, desc.ptr);
+    R_ASSERT3(bytesRead == static_cast<ssize_t>(desc.size_compressed), "cannot read archive entry", fname);
+    if (desc.size_real == desc.size_compressed)
+    {
+        R = xr_new<CTempReader>(compressed, desc.size_real, 0);
+        return;
+    }
+    u8* decompressed = xr_alloc<u8>(desc.size_real);
+    rtc_decompress(decompressed, desc.size_real, compressed, desc.size_compressed);
+    xr_free(compressed);
+    R = xr_new<CTempReader>(decompressed, desc.size_real, 0);
+    return;
+#endif
     size_t start = desc.ptr / dwAllocGranularity * dwAllocGranularity;
     size_t end = (desc.ptr + desc.size_compressed) / dwAllocGranularity;
     if ((desc.ptr + desc.size_compressed) % dwAllocGranularity)

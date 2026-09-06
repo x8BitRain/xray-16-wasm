@@ -28,6 +28,10 @@ void CUICursor::OnDeviceReset()
     correction.x = UI_BASE_WIDTH  / (float)Device.m_rcWindowClient.w;
     correction.y = UI_BASE_HEIGHT / (float)Device.m_rcWindowClient.h;
 
+#ifdef XR_PLATFORM_WEB
+    // The canvas is the display: the browser's pointer position is authoritative unless it is locked
+    m_bound_to_system_cursor = true;
+#else
     SDL_Rect display;
     if (0 == SDL_GetDisplayBounds(0, &display))
     {
@@ -35,6 +39,7 @@ void CUICursor::OnDeviceReset()
         const u32 screen_size_y = display.h - display.y;
         m_bound_to_system_cursor = screen_size_y >= Device.dwHeight && screen_size_x >= Device.dwWidth;
     }
+#endif
     if (m_bound_to_system_cursor) // sanity
         Device.UpdateWindowRects();
 }

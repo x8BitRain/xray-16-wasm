@@ -188,6 +188,8 @@ void CScriptProfiler::script_register(lua_State* luaState)
 
     module(luaState, "profiler")
     [
+        // Vanilla _g.script calls profiler.setup_hook() when no JIT is present; hooks are handled here
+        def("setup_hook", +[]() {}),
         def("is_active", +[]() -> bool
         {
             return GEnv.ScriptEngine->m_profiler->IsActive();

@@ -1,0 +1,19 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>xray web spike</title>
+<style>
+  body { margin: 0; background: #111; color: #ddd; font: 13px monospace; }
+  canvas { display: block; width: 800px; height: 450px; background: #000; }
+  pre { height: 40vh; overflow: auto; margin: 0; padding: 8px; }
+</style>
+<canvas id="canvas" tabindex="0" width="800" height="450"></canvas>
+<pre id="log"></pre>
+<script type="module">
+  import createModule from './spike.js';
+  const log = document.getElementById('log');
+  const canvas = document.getElementById('canvas');
+  const print = (s) => { log.textContent += s + '\n'; log.scrollTop = log.scrollHeight; };
+  canvas.addEventListener('click', () => { canvas.focus(); canvas.requestPointerLock(); });
+  print('crossOriginIsolated=' + crossOriginIsolated);
+  createModule({ canvas, print, printErr: print });
+</script>

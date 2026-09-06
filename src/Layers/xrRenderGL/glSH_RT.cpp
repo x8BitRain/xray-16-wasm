@@ -33,7 +33,7 @@ void CRT::create(LPCSTR Name, u32 w, u32 h, D3DFORMAT f, u32 SampleCount /*= 1*/
 
     // Get caps
     GLint max_width, max_height;
-#ifdef XR_PLATFORM_APPLE
+#if defined(XR_PLATFORM_APPLE) || defined(XR_PLATFORM_WEB) // GLES 3.0 has no GL_MAX_FRAMEBUFFER_WIDTH either
     // https://developer.apple.com/library/archive/documentation/GraphicsImaging/Conceptual/OpenGL-MacProgGuide/opengl_offscreen/opengl_offscreen.html
     CHK_GL(glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_width));
     max_height = max_width;
@@ -60,6 +60,7 @@ void CRT::create(LPCSTR Name, u32 w, u32 h, D3DFORMAT f, u32 SampleCount /*= 1*/
 
     pTexture = RImplementation.Resources->_CreateTexture(Name);
     pTexture->surface_set(target, pRT);
+    pTexture->size_set(w, h);
 
     // OpenGL doesn't differentiate between color and depth targets
     pZRT = pRT;
@@ -88,7 +89,9 @@ void CRT::reset_end()
 void CRT::resolve_into(CRT& destination) const
 {
     glReadBuffer(GL_COLOR_ATTACHMENT0);
+#ifndef XR_PLATFORM_WEB // glDrawBuffers below covers it; glDrawBuffer does not exist in GLES
     glDrawBuffer(GL_COLOR_ATTACHMENT1);
+#endif
 
     constexpr GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
     RCache.set_RT(pRT, 0);

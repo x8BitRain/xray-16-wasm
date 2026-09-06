@@ -691,7 +691,9 @@ void CScriptProfiler::LuaJitProfilerStart(lua_State* L, cpcstr mode, luaJIT_prof
 {
     // Only single JIT profiler can exist and it will not attach with multiple states.
     // Also only VM started profiler can end it, be careful.
+#ifndef XRAY_NO_LUAJIT
     luaJIT_profile_start(L, mode, callback, data);
+#endif
 }
 
 /*
@@ -705,7 +707,9 @@ void CScriptProfiler::LuaJitProfilerStart(lua_State* L, cpcstr mode, luaJIT_prof
  */
 void CScriptProfiler::LuaJitProfilerStop(lua_State* L)
 {
+#ifndef XRAY_NO_LUAJIT
     luaJIT_profile_stop(L);
+#endif
 }
 
 /*
@@ -721,6 +725,9 @@ void CScriptProfiler::LuaJitProfilerStop(lua_State* L)
  */
 shared_str CScriptProfiler::LuaJitProfilerDumpToString(lua_State* L, cpcstr format, int depth)
 {
+#ifdef XRAY_NO_LUAJIT
+    return { "" };
+#else
     string2048 buffer;
     size_t length;
     cpcstr dump = luaJIT_profile_dumpstack(L, format, depth, &length);
@@ -730,6 +737,7 @@ shared_str CScriptProfiler::LuaJitProfilerDumpToString(lua_State* L, cpcstr form
     buffer[length] = 0;
 
     return { buffer };
+#endif
 }
 
 /*
@@ -745,10 +753,14 @@ shared_str CScriptProfiler::LuaJitProfilerDumpToString(lua_State* L, cpcstr form
  */
 std::pair<cpcstr, size_t> CScriptProfiler::LuaJitProfilerDump(lua_State* L, cpcstr format, int depth)
 {
+#ifdef XRAY_NO_LUAJIT
+    return { "", 0 };
+#else
     size_t length;
     cpcstr dump = luaJIT_profile_dumpstack(L, format, depth, &length);
 
     return { dump, length };
+#endif
 }
 
 /*

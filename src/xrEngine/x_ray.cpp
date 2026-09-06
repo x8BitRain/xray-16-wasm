@@ -9,6 +9,10 @@
 
 #include "x_ray.h"
 
+#ifdef XR_PLATFORM_WEB
+#include <emscripten.h>
+#endif
+
 #include "embedded_resources_management.h"
 
 #include "xrCore/Threading/TaskManager.hpp"
@@ -369,7 +373,35 @@ int CApplication::Run()
     HideSplash();
     Device.Run();
 
-    while (!SDL_QuitRequested()) // SDL_PumpEvents is here
+#ifdef XR_PLATFORM_WEB
+    // Frames are scheduled by the worker's own event loop, paced with setTimeout:
+    // requestAnimationFrame does not fire inside a worker, so a zero fps (rAF) loop never runs.
+    emscripten_set_main_loop_arg([](void* application)
+    {
+        auto* app = static_cast<CApplication*>(application);
+        if (!app->RunFrame())
+        {
+            emscripten_cancel_main_loop();
+            xr_delete(app);
+        }
+    }, this, 60, 0);
+#else
+    while (RunFrame())
+        ;
+#endif
+
+    return 0;
+}
+
+bool CApplication::RunFrame()
+{
+    if (SDL_QuitRequested()) // SDL_PumpEvents is here
+    {
+        Device.Shutdown();
+        return false;
+    }
+
+
     {
         FrameMarkStart(FRAME_MARK_APPLICATION_RUN);
         bool canCallActivate = false;
@@ -434,11 +466,9 @@ int CApplication::Run()
 
         UpdateDiscordStatus();
         FrameMarkEnd(FRAME_MARK_APPLICATION_RUN);
-    } // while (!SDL_QuitRequested())
+    }
 
-    Device.Shutdown();
-
-    return 0;
+    return true;
 }
 
 void CApplication::ShowSplash(bool topmost)

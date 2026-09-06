@@ -109,6 +109,9 @@ private:
     VertexBufferHandle vb;
     IndexBufferHandle ib;
     u32 vb_stride;
+#ifdef USE_OGL
+    u32 vb_base_vertex; // attribute pointer offset applied when base vertex draws are unavailable
+#endif
 
     // Pixel/Vertex constants
     alignas(16) R_constants constants;
@@ -411,6 +414,9 @@ public:
 #endif
 
     ICF void set_Vertices(VertexBufferHandle _vb, u32 _vb_stride);
+#ifdef USE_OGL
+    ICF void DrawIndexedBaseVertex(GLenum topology, u32 indexCount, u32 startI, u32 baseV);
+#endif
     ICF void set_Indices(IndexBufferHandle _ib);
     ICF void set_Geometry(SGeometry* _geom);
     ICF void set_Geometry(ref_geom& _geom) { set_Geometry(&*_geom); }

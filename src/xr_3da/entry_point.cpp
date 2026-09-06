@@ -11,6 +11,11 @@
 #include <getopt.h>
 #endif
 
+#if defined(XR_PLATFORM_WEB)
+#include <emscripten.h>
+#include <emscripten/wasmfs.h>
+#endif
+
 // Always request high performance GPU
 extern "C"
 {
@@ -43,14 +48,30 @@ struct tracy_raii
     }
 };
 
+// "-nogame" must not match "-nogameintro"
+static bool has_flag(pcstr commandLine, pcstr flag)
+{
+    const char* found = strstr(commandLine, flag);
+    if (!found)
+        return false;
+    const char next = found[strlen(flag)];
+    return next == '\0' || next == ' ';
+}
+
 int entry_point(pcstr commandLine)
 {
     tracy_raii raii;
-    auto* game = strstr(commandLine, "-nogame") ? nullptr : &xrGame;
+    auto* game = has_flag(commandLine, "-nogame") ? nullptr : &xrGame;
 
+#if defined(XR_PLATFORM_WEB)
+    // The browser event loop drives frames after Run() returns, so the application outlives this call.
+    auto* app = xr_new<CApplication>(commandLine, game, s_render_modules);
+    return app->Run();
+#else
     CApplication app{ commandLine, game, s_render_modules };
 
     return app.Run();
+#endif
 }
 
 #if defined(XR_PLATFORM_WINDOWS)
@@ -81,6 +102,12 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE prevInst, char* commandLine, int 
 int main(int argc, char *argv[])
 {
     int result = EXIT_FAILURE;
+
+#if defined(XR_PLATFORM_WEB)
+    // The page ingests game files into the Origin Private File System; expose it at /opfs.
+    wasmfs_create_directory("/opfs", 0777, wasmfs_create_opfs_backend());
+    setvbuf(stdout, nullptr, _IOLBF, 0); // engine log lines reach the page as they are written
+#endif
 
     try
     {
@@ -125,6 +152,11 @@ int main(int argc, char *argv[])
     {
     // this executes if f() throws std::string or int or any other unrelated type
     }
+
+#if defined(XR_PLATFORM_WEB)
+    if (result == 0)
+        emscripten_exit_with_live_runtime();
+#endif
 
     return result;
 }

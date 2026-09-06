@@ -3,6 +3,10 @@
 #include "Layers/xrRender/HWCaps.h"
 #include "xrCore/ModuleLookup.hpp"
 
+#ifdef XR_PLATFORM_WEB
+#include <emscripten/html5.h>
+#endif
+
 namespace xray::render::RENDER_NAMESPACE
 {
 class CHW
@@ -56,6 +60,11 @@ public:
     SDL_Window* m_window{};
 
     SDL_GLContext m_context{};
+
+#ifdef XR_PLATFORM_WEB
+    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE m_webgl{};
+    bool BaseVertexDrawSupported{};
+#endif
 
     pcstr AdapterName;
     pcstr OpenGLVersionString;

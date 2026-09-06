@@ -112,7 +112,8 @@ bool CResourceManager::_LinkPP(SPass& pass)
     else
     {
         pp.pp = GLLinkMonolithicProgram(pp.cName.c_str(), pass.ps->sh, pass.vs->sh, pass.gs->sh);
-        pp.constants.parse(&pp.pp, RC_dest_all);
+        if (pp.pp)
+            pp.constants.parse(&pp.pp, RC_dest_all);
 
         pass.ps = nullptr;
         pass.vs = nullptr;

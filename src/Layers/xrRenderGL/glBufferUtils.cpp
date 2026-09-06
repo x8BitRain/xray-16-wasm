@@ -5,11 +5,20 @@
 
 namespace xray::render::RENDER_NAMESPACE
 {
+#ifdef XR_PLATFORM_WEB
+// WebGL's mapping emulation rejects GL_MAP_UNSYNCHRONIZED_BIT and uploads only invalidated ranges
+enum
+{
+    LOCKFLAGS_FLUSH  = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT,
+    LOCKFLAGS_APPEND = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT,
+};
+#else
 enum
 {
     LOCKFLAGS_FLUSH  = GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_INVALIDATE_BUFFER_BIT,
     LOCKFLAGS_APPEND = GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT, // TODO: Implement buffer object appending using glBufferSubData
 };
+#endif
 
 u32 GetFVFVertexSize(u32 FVF)
 {
@@ -153,14 +162,14 @@ void IterVertexDeclaration(const VertexElement* dxdecl, F&& callback)
     }
 }
 
-void SetVertexDeclaration(const VertexElement* dxdecl)
+void SetVertexDeclaration(const VertexElement* dxdecl, u32 baseOffset)
 {
     auto stride = GetDeclVertexSize(dxdecl, 0);
     IterVertexDeclaration(dxdecl,
     [&](GLuint location, GLint size, GLenum type, GLboolean normalized, intptr_t offset, GLuint /*stream*/)
     {
         CHK_GL(glVertexAttribPointer(
-            location, size, type, normalized, stride, (void*)offset));
+            location, size, type, normalized, stride, (void*)(offset + baseOffset)));
     });
 }
 
@@ -179,9 +188,9 @@ void ConvertVertexDeclaration(const VertexElement* dxdecl, SDeclaration* decl)
     });
 }
 
-void SetGLVertexPointer(SDeclaration* decl)
+void SetGLVertexPointer(SDeclaration* decl, u32 baseOffset)
 {
-    SetVertexDeclaration(decl->dcl_code.data());
+    SetVertexDeclaration(decl->dcl_code.data(), baseOffset);
 }
 
 //-----------------------------------------------------------------------------

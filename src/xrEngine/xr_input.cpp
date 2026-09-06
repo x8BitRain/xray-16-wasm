@@ -519,7 +519,11 @@ void CInput::ControllerUpdate()
 
 bool KbdKeyToButtonName(const int dik, xr_string& result)
 {
+#ifdef XR_PLATFORM_WEB
+    static std::locale locale = std::locale::classic();
+#else
     static std::locale locale("");
+#endif
 
     if (dik >= 0)
     {
