@@ -374,8 +374,6 @@ int CApplication::Run()
     Device.Run();
 
 #ifdef XR_PLATFORM_WEB
-    // Frames are scheduled by the worker's own event loop, paced with setTimeout:
-    // requestAnimationFrame does not fire inside a worker, so a zero fps (rAF) loop never runs.
     emscripten_set_main_loop_arg([](void* application)
     {
         auto* app = static_cast<CApplication*>(application);

@@ -100,7 +100,6 @@ R_occlusion::occq_result R_occlusion::occq_get(u32& ID)
     T.Start();
     RImplementation.BasicStats.Wait.Begin();
 #ifdef XR_PLATFORM_WEB
-    // WebGL query results arrive on later frames; never stall, treat a pending query as visible
     if ((hr = GetData(used[ID].Q, &fragments, sizeof(fragments))) == S_FALSE)
         fragments = (occq_result)-1;
 #else

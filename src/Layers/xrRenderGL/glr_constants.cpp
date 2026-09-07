@@ -33,9 +33,6 @@ BOOL R_constant_table::parse(void* _desc, u32 destination)
     GLint uniformCount;
     CHK_GL(glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &uniformCount));
 
-    // Texture stages are the position of the sampler in the pass texture list, so they must be
-    // contiguous. A monolithic program enumerates the uniforms of both stages together, which
-    // leaves gaps, so count the samplers instead of using the uniform index.
     u16 samplerStage = 0;
 
     for (GLint i = 0; i < uniformCount; i++)

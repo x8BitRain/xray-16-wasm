@@ -415,6 +415,7 @@ public:
 
     ICF void set_Vertices(VertexBufferHandle _vb, u32 _vb_stride);
 #ifdef USE_OGL
+    ICF void SetBaseVertex(u32 baseV);
     ICF void DrawIndexedBaseVertex(GLenum topology, u32 indexCount, u32 startI, u32 baseV);
 #endif
     ICF void set_Indices(IndexBufferHandle _ib);

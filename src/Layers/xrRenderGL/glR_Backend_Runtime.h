@@ -321,7 +321,14 @@ IC u32 GetIndexCount(D3DPRIMITIVETYPE T, u32 iPrimitiveCount)
 #ifdef XR_PLATFORM_WEB
 extern "C" void glDrawElementsInstancedBaseVertexBaseInstanceWEBGL(GLenum, GLsizei, GLenum, const void*, GLsizei, GLint, GLuint);
 
-// WebGL2 draws with a base vertex through an extension; otherwise the attribute pointers are re-based.
+ICF void CBackend::SetBaseVertex(u32 baseV)
+{
+    if (vb_base_vertex == baseV)
+        return;
+    vb_base_vertex = baseV;
+    SetGLVertexPointer(decl, baseV * vb_stride);
+}
+
 ICF void CBackend::DrawIndexedBaseVertex(GLenum topology, u32 indexCount, u32 startI, u32 baseV)
 {
     const void* indices = (void*)(startI * sizeof(GLushort));
@@ -330,11 +337,7 @@ ICF void CBackend::DrawIndexedBaseVertex(GLenum topology, u32 indexCount, u32 st
         glDrawElementsInstancedBaseVertexBaseInstanceWEBGL(topology, indexCount, GL_UNSIGNED_SHORT, indices, 1, baseV, 0);
         return;
     }
-    if (vb_base_vertex != baseV)
-    {
-        vb_base_vertex = baseV;
-        SetGLVertexPointer(decl, baseV * vb_stride);
-    }
+    SetBaseVertex(baseV);
     CHK_GL(glDrawElements(topology, indexCount, GL_UNSIGNED_SHORT, indices));
 }
 #endif
@@ -365,6 +368,9 @@ ICF void CBackend::Render(D3DPRIMITIVETYPE T, u32 startV, u32 PC)
     stat.render.verts += iIndexCount;
     stat.render.polys += PC;
     constants.flush();
+#ifdef XR_PLATFORM_WEB
+    SetBaseVertex(0);
+#endif
     CHK_GL(glDrawArrays(Topology, startV, iIndexCount));
     PGO(Msg("PGO:DIP:%dv/%df", iIndexCount, PC));
 }

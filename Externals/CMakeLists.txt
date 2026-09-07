@@ -14,7 +14,6 @@ add_compile_options(${XRAY_DISABLE_WARNINGS})
 
 add_subdirectory(GameSpy)
 if (EMSCRIPTEN)
-    # GameSpy detects the OS through __linux__, which Emscripten does not define; its POSIX path builds fine.
     target_compile_definitions(GameSpy-oxr PRIVATE _LINUX)
 endif()
 add_subdirectory(imgui-proj)

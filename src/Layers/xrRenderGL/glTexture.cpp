@@ -122,6 +122,8 @@ GLuint CRender::texture_load(LPCSTR fRName, u32& ret_msize, GLenum& ret_desc, u3
     gli::gl::format const format = GL.translate(texture.format(), texture.swizzles());
     GLenum target = GL.translate(texture.target());
 
+
+    const texture_upload_unit uploadUnit(target);
     glGenTextures(1, &pTexture);
     glBindTexture(target, pTexture);
 
@@ -129,7 +131,6 @@ GLuint CRender::texture_load(LPCSTR fRName, u32& ret_msize, GLenum& ret_desc, u3
     glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, static_cast<GLint>(texture.levels() - 1));
 
 #ifdef XR_PLATFORM_WEB
-    // WebGL has no texture swizzle: 8-bit BGRA data is reordered on the CPU before upload instead
     const bool swapRedBlue = !gli::is_compressed(texture.format()) && gli::block_size(texture.format()) == 4
         && format.Swizzles[gli::SWIZZLE_RED] == gli::SWIZZLE_BLUE;
     xr_vector<u8> reordered;

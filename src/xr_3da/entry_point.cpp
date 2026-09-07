@@ -48,7 +48,6 @@ struct tracy_raii
     }
 };
 
-// "-nogame" must not match "-nogameintro"
 static bool has_flag(pcstr commandLine, pcstr flag)
 {
     const char* found = strstr(commandLine, flag);
@@ -64,7 +63,6 @@ int entry_point(pcstr commandLine)
     auto* game = has_flag(commandLine, "-nogame") ? nullptr : &xrGame;
 
 #if defined(XR_PLATFORM_WEB)
-    // The browser event loop drives frames after Run() returns, so the application outlives this call.
     auto* app = xr_new<CApplication>(commandLine, game, s_render_modules);
     return app->Run();
 #else
@@ -104,7 +102,6 @@ int main(int argc, char *argv[])
     int result = EXIT_FAILURE;
 
 #if defined(XR_PLATFORM_WEB)
-    // The page ingests game files into the Origin Private File System; expose it at /opfs.
     wasmfs_create_directory("/opfs", 0777, wasmfs_create_opfs_backend());
     setvbuf(stdout, nullptr, _IOLBF, 0); // engine log lines reach the page as they are written
 #endif

@@ -1398,7 +1398,6 @@ void CLocatorAPI::file_from_archive(IReader*& R, pcstr fname, const file& desc)
     // Archived one
     archive& A = m_archives[desc.vfs];
 #ifdef XR_PLATFORM_WEB
-    // WasmFS has no real memory mapping; read the entry directly
     u8* compressed = xr_alloc<u8>(desc.size_compressed);
     const ssize_t bytesRead = pread(A.hSrcFile, compressed, desc.size_compressed, desc.ptr);
     R_ASSERT3(bytesRead == static_cast<ssize_t>(desc.size_compressed), "cannot read archive entry", fname);

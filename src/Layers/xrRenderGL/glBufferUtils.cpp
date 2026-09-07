@@ -6,7 +6,6 @@
 namespace xray::render::RENDER_NAMESPACE
 {
 #ifdef XR_PLATFORM_WEB
-// WebGL's mapping emulation rejects GL_MAP_UNSYNCHRONIZED_BIT and uploads only invalidated ranges
 enum
 {
     LOCKFLAGS_FLUSH  = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT,

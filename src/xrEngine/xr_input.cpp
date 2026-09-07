@@ -245,6 +245,15 @@ void CInput::MouseUpdate()
     }
 }
 
+#ifdef XR_PLATFORM_WEB
+static SDL_Scancode WebKeyboardScancode(SDL_Scancode scancode)
+{
+    return scancode == SDL_SCANCODE_RSHIFT ? SDL_SCANCODE_ESCAPE : scancode;
+}
+#else
+static SDL_Scancode WebKeyboardScancode(SDL_Scancode scancode) { return scancode; }
+#endif
+
 void CInput::KeyUpdate()
 {
     ZoneScoped;
@@ -263,11 +272,11 @@ void CInput::KeyUpdate()
         case SDL_KEYDOWN:
             if (event.key.repeat)
                 continue;
-            keyboardState[event.key.keysym.scancode] = true;
+            keyboardState[WebKeyboardScancode(event.key.keysym.scancode)] = true;
             break;
 
         case SDL_KEYUP:
-            keyboardState[event.key.keysym.scancode] = false;
+            keyboardState[WebKeyboardScancode(event.key.keysym.scancode)] = false;
             break;
         }
     }
@@ -299,11 +308,11 @@ void CInput::KeyUpdate()
         case SDL_KEYDOWN:
             if (event.key.repeat)
                 continue;
-            cbStack.back()->IR_OnKeyboardPress(event.key.keysym.scancode);
+            cbStack.back()->IR_OnKeyboardPress(WebKeyboardScancode(event.key.keysym.scancode));
             break;
 
         case SDL_KEYUP:
-            cbStack.back()->IR_OnKeyboardRelease(event.key.keysym.scancode);
+            cbStack.back()->IR_OnKeyboardRelease(WebKeyboardScancode(event.key.keysym.scancode));
             break;
 
         case SDL_TEXTINPUT:

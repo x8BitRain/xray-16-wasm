@@ -215,12 +215,14 @@ void CTexture::Load()
             while (glGetError() != GL_NO_ERROR)
                 ; // discard errors left by earlier calls
 
+            const texture_upload_unit uploadUnit(GL_TEXTURE_2D);
             glGenTextures(1, &pTexture);
             glBindTexture(GL_TEXTURE_2D, pTexture);
             CHK_GL(glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, _w, _h));
 
             pSurface = pTexture;
             desc = GL_TEXTURE_2D;
+            size_set(_w, _h);
             GLenum err = glGetError();
             if (err != GL_NO_ERROR)
             {
@@ -252,12 +254,14 @@ void CTexture::Load()
 
             // Now create texture to copy PBO into
             GLuint pTexture = 0;
+            const texture_upload_unit uploadUnit(GL_TEXTURE_2D);
             glGenTextures(1, &pTexture);
             glBindTexture(GL_TEXTURE_2D, pTexture);
             CHK_GL(glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, pAVI->m_dwWidth, pAVI->m_dwHeight));
 
             pSurface = pTexture;
             desc = GL_TEXTURE_2D;
+            size_set(pAVI->m_dwWidth, pAVI->m_dwHeight);
             if (glGetError() != GL_NO_ERROR)
             {
                 FATAL("Invalid video stream");

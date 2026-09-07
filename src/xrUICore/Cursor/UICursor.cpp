@@ -29,8 +29,7 @@ void CUICursor::OnDeviceReset()
     correction.y = UI_BASE_HEIGHT / (float)Device.m_rcWindowClient.h;
 
 #ifdef XR_PLATFORM_WEB
-    // The canvas is the display: the browser's pointer position is authoritative unless it is locked
-    m_bound_to_system_cursor = true;
+    m_bound_to_system_cursor = false;
 #else
     SDL_Rect display;
     if (0 == SDL_GetDisplayBounds(0, &display))

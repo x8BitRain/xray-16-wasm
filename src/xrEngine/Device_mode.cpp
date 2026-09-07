@@ -193,7 +193,6 @@ void CRenderDevice::UpdateWindowRects()
 void CRenderDevice::SelectResolution(const bool windowed)
 {
 #ifdef XR_PLATFORM_WEB
-    // The canvas is the display: the engine picks the resolution and the page scales it with CSS
     if (psDeviceMode.Width == 0 || psDeviceMode.Height == 0)
     {
         psDeviceMode.Width = 1280;

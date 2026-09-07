@@ -1,9 +1,5 @@
 #pragma once
 
-// Rewrites the engine's GLSL 4.10 shader text into GLSL ES 3.00 for WebGL2.
-// Operates on fully expanded source: includes inlined, option #defines prepended.
-// Kept free of engine dependencies so tools can validate shaders offline.
-
 #include <algorithm>
 #include <cctype>
 #include <string>
@@ -24,7 +20,6 @@ inline std::string_view strip_comment(std::string_view line)
     return comment == std::string_view::npos ? line : line.substr(0, comment);
 }
 
-// Identifiers, numbers and single punctuation characters
 inline std::vector<std::string> tokenize(std::string_view line)
 {
     std::vector<std::string> tokens;
@@ -60,7 +55,6 @@ struct varying_declaration
     std::string name;
 };
 
-// layout ( location = X ) in|out TYPE NAME ;
 inline bool parse_varying(const std::vector<std::string>& tokens, varying_declaration& declaration)
 {
     if (tokens.size() != 10)
@@ -75,7 +69,6 @@ inline bool parse_varying(const std::vector<std::string>& tokens, varying_declar
     return true;
 }
 
-// #define NAME NUMBER
 inline bool parse_numeric_define(const std::vector<std::string>& tokens, std::string& name, std::string& value)
 {
     if (tokens.size() != 4 || tokens[0] != "#" || tokens[1] != "define")
@@ -87,7 +80,6 @@ inline bool parse_numeric_define(const std::vector<std::string>& tokens, std::st
     return true;
 }
 
-// out TYPE SV_Target[N] ;
 inline bool parse_fragment_output(const std::vector<std::string>& tokens, std::string& location)
 {
     if (tokens.size() != 4 || tokens[0] != "out" || tokens[3] != ";")
@@ -99,7 +91,6 @@ inline bool parse_fragment_output(const std::vector<std::string>& tokens, std::s
     return true;
 }
 
-// in vec4 gl_FragCoord; and friends: legal in GLSL 4.10, an error in GLSL ES 3.00
 inline bool is_builtin_redeclaration(const std::vector<std::string>& tokens)
 {
     if (tokens.size() < 3 || (tokens[0] != "in" && tokens[0] != "out"))
@@ -107,9 +98,6 @@ inline bool is_builtin_redeclaration(const std::vector<std::string>& tokens)
     return tokens[2].rfind("gl_", 0) == 0;
 }
 
-// GLSL ES forbids undefined macros in #if expressions, where desktop GLSL reads them as 0.
-// Options are either undefined or defined to a value, so requiring every identifier to be
-// defined keeps the same outcome for the expression forms used by the shaders.
 inline bool guard_conditional(std::string_view line, const std::vector<std::string>& tokens, std::string& guarded)
 {
     if (tokens.size() < 3 || tokens[0] != "#" || (tokens[1] != "if" && tokens[1] != "elif"))
@@ -139,7 +127,6 @@ inline bool guard_conditional(std::string_view line, const std::vector<std::stri
     return true;
 }
 
-// Preprocessor conditionals that enclose a declaration, so injected code can repeat them
 using conditional_stack = std::vector<std::vector<std::string>>;
 
 inline void track_conditional(const std::vector<std::string>& tokens, const std::string& directive, conditional_stack& stack)
@@ -174,32 +161,49 @@ struct stage_varying
     conditional_stack conditionals;
 };
 
-// Position of the closing brace of main(), or npos
-inline size_t find_main_end(const std::string& text, size_t& bodyStart)
+struct main_body
 {
-    const size_t mainPos = text.find("void main");
-    if (mainPos == std::string::npos)
-        return std::string::npos;
-    bodyStart = text.find('{', mainPos);
-    if (bodyStart == std::string::npos)
-        return std::string::npos;
+    size_t bodyStart; // the opening brace
+    size_t bodyEnd;   // the closing brace
+};
 
-    int depth = 0;
-    for (size_t i = bodyStart; i < text.size(); ++i)
+inline std::vector<main_body> find_main_bodies(const std::string& text)
+{
+    std::vector<main_body> bodies;
+    size_t search = 0;
+    while (true)
     {
-        if (text[i] == '/' && i + 1 < text.size() && text[i + 1] == '/')
+        const size_t mainPos = text.find("void main", search);
+        if (mainPos == std::string::npos)
+            return bodies;
+        search = mainPos + 9;
+
+        const size_t bodyStart = text.find('{', mainPos);
+        if (bodyStart == std::string::npos)
+            return bodies;
+
+        int depth = 0;
+        for (size_t i = bodyStart; i < text.size(); ++i)
         {
-            i = text.find('\n', i);
-            if (i == std::string::npos)
+            if (text[i] == '/' && i + 1 < text.size() && text[i + 1] == '/')
+            {
+                i = text.find('\n', i);
+                if (i == std::string::npos)
+                    break;
+                continue;
+            }
+            if (text[i] == '{')
+                ++depth;
+            else if (text[i] == '}' && --depth == 0)
+            {
+                bodies.push_back({ bodyStart, i });
+                search = i + 1;
                 break;
-            continue;
+            }
         }
-        if (text[i] == '{')
-            ++depth;
-        else if (text[i] == '}' && --depth == 0)
-            return i;
+        if (bodies.empty() || bodies.back().bodyStart != bodyStart)
+            return bodies;
     }
-    return std::string::npos;
 }
 
 constexpr std::string_view preamble =
@@ -216,10 +220,6 @@ constexpr std::string_view preamble =
     "vec4 xr_widen(vec4 v) { return v; }\n";
 } // namespace detail
 
-// GLSL 4.10 matches varyings by location and tolerates type differences between the
-// stages a program pairs; GLSL ES 3.00 matches by name and type. Every varying therefore
-// becomes a vec4 interface variable named after its location, and the shader's own
-// variable turns into a global that main() copies from or into.
 inline std::string rewrite(const std::string& source, bool vertexStage)
 {
     using namespace detail;
@@ -243,7 +243,6 @@ inline std::string rewrite(const std::string& source, bool vertexStage)
         const std::string_view line(source.data() + lineStart, lineEnd - lineStart);
         lineStart = lineEnd + 1;
 
-        // Dropped lines stay as empty lines so compiler messages keep the original line numbers
         if (skippingPerVertexBlock)
         {
             if (line.find("};") != std::string_view::npos)
@@ -317,10 +316,8 @@ inline std::string rewrite(const std::string& source, bool vertexStage)
     if (!preambleInserted)
         output.insert(0, preamble);
 
-    // Copy between the shader's variables and the vec4 interface at the edges of main()
-    size_t bodyStart = 0;
-    const size_t mainEnd = find_main_end(output, bodyStart);
-    if (mainEnd == std::string::npos || varyings.empty())
+    const std::vector<main_body> bodies = find_main_bodies(output);
+    if (bodies.empty() || varyings.empty())
         return output;
 
     std::string copies = "\n";
@@ -332,8 +329,8 @@ inline std::string rewrite(const std::string& source, bool vertexStage)
         copies += wrap_in_conditionals(varying.conditionals, statement);
     }
 
-    const size_t insertAt = vertexStage ? mainEnd : bodyStart + 1;
-    output.insert(insertAt, copies);
+    for (auto body = bodies.rbegin(); body != bodies.rend(); ++body)
+        output.insert(vertexStage ? body->bodyEnd : body->bodyStart + 1, copies);
     return output;
 }
 } // namespace xray::render::essl

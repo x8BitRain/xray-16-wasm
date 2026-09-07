@@ -178,6 +178,10 @@ void CHW::CreateDevice(SDL_Window* hWnd)
     Msg("* GPU OpenGL shading language version: %s", ShadingVersion);
     Msg("* GPU OpenGL VTF units: [%d] CTI units: [%d]", iMaxVTFUnits, iMaxCTIUnits);
 
+    TextureUploadUnit = u32(iMaxCTIUnits) - 1;
+    R_ASSERT2(TextureUploadUnit >= CTexture::rstVertex + CTexture::mtMaxVertexShaderTextures,
+        "too few texture units for a dedicated upload unit");
+
     ComputeShadersSupported = false; // XXX: Implement compute shaders support
 
     if (glGenFramebuffers && glBindFramebuffer)
@@ -341,5 +345,18 @@ void CHW::EndPixEvent() const
 {
     if (glPushDebugGroup)
         glPopDebugGroup();
+}
+} // namespace xray::render::RENDER_NAMESPACE
+
+namespace xray::render::RENDER_NAMESPACE
+{
+texture_upload_unit::texture_upload_unit(GLenum target) : target(target)
+{
+    CHK_GL(glActiveTexture(GL_TEXTURE0 + HW.TextureUploadUnit));
+}
+
+texture_upload_unit::~texture_upload_unit()
+{
+    CHK_GL(glBindTexture(target, 0));
 }
 } // namespace xray::render::RENDER_NAMESPACE

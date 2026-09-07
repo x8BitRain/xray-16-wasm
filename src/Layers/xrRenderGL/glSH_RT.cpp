@@ -50,6 +50,7 @@ void CRT::create(LPCSTR Name, u32 w, u32 h, D3DFORMAT f, u32 SampleCount /*= 1*/
     RImplementation.Resources->Evict();
 
     target = (SampleCount > 1) ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
+    const texture_upload_unit uploadUnit(target);
     glGenTextures(1, &pRT);
     CHK_GL(glBindTexture(target, pRT));
     if (SampleCount > 1)
@@ -104,6 +105,20 @@ void CRT::resolve_into(CRT& destination) const
     CHK_GL(glBlitFramebuffer(0, 0, dwWidth, dwHeight, 0, 0, destination.dwWidth, destination.dwHeight,
         GL_COLOR_BUFFER_BIT, GL_NEAREST));
 }
+
+#ifdef XR_PLATFORM_WEB
+void CRT::copy_into(CRT& destination) const
+{
+    RCache.set_RT(pRT, 0);
+    RCache.set_RT(0, 1);
+    RCache.set_RT(0, 2);
+    CHK_GL(glReadBuffer(GL_COLOR_ATTACHMENT0));
+
+    const texture_upload_unit uploadUnit(GL_TEXTURE_2D);
+    CHK_GL(glBindTexture(GL_TEXTURE_2D, destination.pRT));
+    CHK_GL(glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, dwWidth, dwHeight));
+}
+#endif
 
 void resptrcode_crt::create(LPCSTR Name, u32 w, u32 h, D3DFORMAT f, u32 SampleCount /*= 1*/, u32 slices_num /*=1*/, Flags32 flags /*= {}*/)
 {

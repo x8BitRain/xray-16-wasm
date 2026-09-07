@@ -1,5 +1,3 @@
-// Offline check: expands a GL shader like the engine does, applies the ESSL rewrite,
-// and writes the result for glslangValidator. Usage: essl_check <shader-root> <file> <vert|frag> <out> [DEFINE=VALUE...]
 #include "../../src/Layers/xrRenderPC_GL/rgl_essl_rewrite.h"
 
 #include <algorithm>
@@ -27,8 +25,6 @@ static size_t line_of(const std::string& text, size_t pos)
     return 1 + std::count(text.begin(), text.begin() + pos, '\n');
 }
 
-// Mirrors shader_sources_manager::load_includes: every #include "x" is replaced by the file's text.
-// #line directives keep glslang's error locations attributable to the original files.
 static std::string expand_includes(const fs::path& root, const fs::path& file)
 {
     const std::string text = read_file(file);

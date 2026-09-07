@@ -70,6 +70,15 @@ public:
     pcstr OpenGLVersionString;
     pcstr ShadingVersion;
     bool ComputeShadersSupported;
+
+    u32 TextureUploadUnit{};
+};
+
+struct texture_upload_unit
+{
+    const GLenum target;
+    explicit texture_upload_unit(GLenum target);
+    ~texture_upload_unit();
 };
 
 extern ECORE_API CHW HW;

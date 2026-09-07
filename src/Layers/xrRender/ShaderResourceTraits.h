@@ -121,7 +121,6 @@ inline std::pair<char, GLuint> GLUseBinary(pcstr* buffer, size_t size, const GLe
 }
 
 #ifdef XR_PLATFORM_WEB
-// Depth-only passes have no pixel shader, but WebGL refuses to link a program without one.
 static GLuint GLDepthOnlyFragmentShader()
 {
     static GLuint shader = 0;

@@ -287,7 +287,6 @@ XRCORE_API pstr xr_strdup(pcstr string)
 #endif
 }
 
-// On the web the libc++ operators already forward to the same malloc
 #ifndef XR_PLATFORM_WEB
 [[nodiscard]] void* operator new(size_t size)
 {

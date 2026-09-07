@@ -1,28 +1,9 @@
-// Static dev server with the cross-origin isolation headers SharedArrayBuffer needs.
-// Usage: node web/serve.mjs [dir] [port] [game-folder]
-// With a game folder, /gamefiles/index.json lists it and /gamefiles/<path> serves it,
-// so the page can ingest into OPFS over HTTP instead of the directory picker.
 import { createServer } from 'node:http';
-import { stat, readFile, readdir, writeFile, mkdir } from 'node:fs/promises';
-import { join, extname, resolve, relative } from 'node:path';
+import { stat, readFile, writeFile, mkdir } from 'node:fs/promises';
+import { join, extname, resolve } from 'node:path';
 
 const root = resolve(process.argv[2] ?? 'web/dist');
 const port = Number(process.argv[3] ?? 8080);
-const gameRoot = process.argv[4] ? resolve(process.argv[4]) : null;
-
-async function listGameFiles() {
-  const files = [];
-  const walk = async (dir) => {
-    for (const name of await readdir(dir)) {
-      const full = join(dir, name);
-      const info = await stat(full);
-      if (info.isDirectory()) await walk(full);
-      else files.push({ path: relative(gameRoot, full).split('\\').join('/'), size: info.size });
-    }
-  };
-  await walk(gameRoot);
-  return files;
-}
 
 const mime = {
   '.html': 'text/html; charset=utf-8',
@@ -50,15 +31,8 @@ createServer(async (req, res) => {
     res.writeHead(200, headers).end('saved ' + name);
     return;
   }
-  if (gameRoot && urlPath === '/gamefiles/index.json') {
-    res.writeHead(200, { ...headers, 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(await listGameFiles()));
-    return;
-  }
-  let file = gameRoot && urlPath.startsWith('/gamefiles/')
-    ? join(gameRoot, urlPath.slice('/gamefiles/'.length))
-    : join(root, urlPath);
-  if (!file.startsWith(root) && !(gameRoot && file.startsWith(gameRoot))) {
+  let file = join(root, urlPath);
+  if (!file.startsWith(root)) {
     res.writeHead(403).end();
     return;
   }

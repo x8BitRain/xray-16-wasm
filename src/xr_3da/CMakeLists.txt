@@ -39,14 +39,16 @@ set_target_properties(xr_3da PROPERTIES
 
 if (EMSCRIPTEN)
     target_link_options(xr_3da PRIVATE ${XRAY_WEB_EXECUTABLE_LINK_OPTIONS})
-    add_custom_command(TARGET xr_3da POST_BUILD
+    add_custom_target(web_dist ALL
         COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_SOURCE_DIR}/web/dist"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE_DIR:xr_3da>/xr_3da.js"
             "$<TARGET_FILE_DIR:xr_3da>/xr_3da.wasm"
             "${CMAKE_SOURCE_DIR}/web/dist"
-        COMMAND node "${CMAKE_SOURCE_DIR}/web/tools/make_manifest.mjs"
+        COMMAND node "${CMAKE_SOURCE_DIR}/web/tools/build_dist.mjs"
+        VERBATIM
     )
+    add_dependencies(web_dist xr_3da)
 endif()
 
 install(TARGETS xr_3da RUNTIME

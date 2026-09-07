@@ -183,6 +183,8 @@ void CBackend::set_Textures(STextureList* textures_list)
     //    return;
     T = textures_list;
     // If resources weren't set at all we should clear from resource #0.
+    u32 usedPS = 0;
+    u32 usedVS = 0;
     int _last_ps = -1;
     int _last_vs = -1;
 #if defined(USE_DX11)
@@ -207,6 +209,7 @@ void CBackend::set_Textures(STextureList* textures_list)
             // ordinary pixel surface
             if ((int)load_id > _last_ps)
                 _last_ps = load_id;
+            usedPS |= 1u << load_id;
             if (textures_ps[load_id] != load_surf || (load_surf && (load_surf->last_slice != load_surf->curr_slice)))
             {
                 textures_ps[load_id] = load_surf;
@@ -233,6 +236,7 @@ void CBackend::set_Textures(STextureList* textures_list)
             u32 load_id_remapped = load_id - CTexture::rstVertex;
             if ((int)load_id_remapped > _last_vs)
                 _last_vs = load_id_remapped;
+            usedVS |= 1u << load_id_remapped;
             if (textures_vs[load_id_remapped] != load_surf)
             {
                 textures_vs[load_id_remapped] = load_surf;
@@ -343,8 +347,10 @@ void CBackend::set_Textures(STextureList* textures_list)
     }
 
     // clear remaining stages (PS)
-    for (++_last_ps; _last_ps < CTexture::mtMaxPixelShaderTextures; _last_ps++)
+    for (u32 _last_ps = 0; _last_ps < CTexture::mtMaxPixelShaderTextures; _last_ps++)
     {
+        if (usedPS & (1u << _last_ps))
+            continue;
         if (!textures_ps[_last_ps])
             continue;
 
@@ -366,8 +372,10 @@ void CBackend::set_Textures(STextureList* textures_list)
 #endif
     }
     // clear remaining stages (VS)
-    for (++_last_vs; _last_vs < CTexture::mtMaxVertexShaderTextures; _last_vs++)
+    for (u32 _last_vs = 0; _last_vs < CTexture::mtMaxVertexShaderTextures; _last_vs++)
     {
+        if (usedVS & (1u << _last_vs))
+            continue;
         if (!textures_vs[_last_vs])
             continue;
 
