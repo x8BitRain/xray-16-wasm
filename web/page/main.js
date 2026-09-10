@@ -61,11 +61,17 @@ function askWorker(message, timeoutMs) {
   });
 }
 
-async function refreshState() {
+async function refreshState(select) {
   try {
-    const state = await askWorker({ type: 'status' }, 15000);
-    $('ingest-status').textContent = state.ingested ? 'game files present in OPFS' : 'game files not ingested yet (launch will only exercise engine startup)';
-    $('launch').disabled = false;
+    const { roots } = await askWorker({ type: 'status' }, 15000);
+    const picker = $('game');
+    picker.replaceChildren(...roots.map((root) => new Option(root, root)));
+    picker.hidden = roots.length === 0;
+    if (select && roots.includes(select)) picker.value = select;
+    $('ingest-status').textContent = roots.length
+      ? `${roots.length} game${roots.length > 1 ? 's' : ''} in OPFS`
+      : 'no game ingested yet; press "Add game folder"';
+    $('launch').disabled = roots.length === 0;
   } catch (e) {
     $('ingest-status').textContent = 'OPFS unavailable: ' + e.message;
     print('OPFS unavailable: ' + e.message);
@@ -73,39 +79,44 @@ async function refreshState() {
 }
 
 $('pick').onclick = async () => {
+  let root;
   try {
     if (!window.showDirectoryPicker)
       throw new Error('this browser has no File System Access API; use Chrome');
-    const dir = await window.showDirectoryPicker({ id: 'stalker-cop', mode: 'read' });
+    const dir = await window.showDirectoryPicker({ id: 'stalker', mode: 'read' });
+    root = dir.name.toLowerCase().replace(/[^a-z0-9._]+/g, '-').replace(/^-|-$/g, '') || 'game';
     $('pick').disabled = true;
-    $('ingest-status').textContent = 'scanning game folder...';
-    await askWorker({ type: 'ingest', dir });
+    $('ingest-status').textContent = `scanning ${dir.name}...`;
+    await askWorker({ type: 'ingest', dir, root });
     $('progress').hidden = true;
-    print('ingestion complete');
+    print(`ingestion complete: ${root}`);
   } catch (e) {
     print('ingestion failed: ' + e.message);
   } finally {
     $('pick').disabled = false;
-    await refreshState();
+    await refreshState(root);
   }
 };
 
 $('launch').onclick = async () => {
+  const root = $('game').value;
   $('launch').disabled = true;
   $('pick').disabled = true;
+  $('game').disabled = true;
   $('ingest-status').textContent = 'syncing engine data...';
   try {
-    await askWorker({ type: 'sync-engine-data' });
+    await askWorker({ type: 'sync-engine-data', root });
   } catch (e) {
     $('ingest-status').textContent = 'engine data sync failed: ' + e.message;
     print('engine data sync failed: ' + e.message);
     $('launch').disabled = false;
     $('pick').disabled = false;
+    $('game').disabled = false;
     return;
   }
-  $('ingest-status').textContent = 'running';
+  $('ingest-status').textContent = 'running ' + root;
 
-  const args = ['-nosplash', '-nointro', '-nogameintro', '-fsltx', '/opfs/game/fsgame.ltx'];
+  const args = ['-nosplash', '-nointro', '-nogameintro', '-fsltx', `/opfs/${root}/fsgame.ltx`];
   args.push(...$('extra-args').value.split(/\s+/).filter(Boolean));
   print('launching: ' + args.join(' '));
 
@@ -113,7 +124,8 @@ $('launch').onclick = async () => {
   canvas.height = 720;
 
   const { default: createModule } = await import('./xr_3da.js');
-  await createModule({ canvas, arguments: args, print, printErr: print });
+  const printArgs = (...parts) => print(parts.join(' '));
+  await createModule({ canvas, arguments: args, print: printArgs, printErr: printArgs });
   canvas.focus();
 
   $('status').textContent = 'engine running';

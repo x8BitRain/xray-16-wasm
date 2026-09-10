@@ -1014,8 +1014,17 @@ void CLocatorAPI::_initialize(u32 flags, pcstr target_folder, pcstr fs_name)
             lp_capt = cnt >= 6 ? capt : 0;
 
             auto p_it = m_paths.find(root);
+            pcstr rootPath = p_it != m_paths.end() ? p_it->second->m_Path : root;
+#ifdef XR_PLATFORM_WEB
+            string_path anchoredRoot;
+            if (p_it == m_paths.end() && root[0] && root[0] != _DELIMITER && root[0] != '/')
+            {
+                strconcat(anchoredRoot, m_paths.find("$fs_root$")->second->m_Path, root);
+                rootPath = anchoredRoot;
+            }
+#endif
 
-            FS_Path* P = xr_new<FS_Path>(p_it != m_paths.end() ? p_it->second->m_Path : root, lp_add, lp_def, lp_capt, fl);
+            FS_Path* P = xr_new<FS_Path>(rootPath, lp_add, lp_def, lp_capt, fl);
             bNoRecurse = !(fl & FS_Path::flRecurse);
             Recurse(P->m_Path);
             auto I = m_paths.emplace(xr_strdup(id), P);

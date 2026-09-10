@@ -132,7 +132,7 @@ GLuint CRender::texture_load(LPCSTR fRName, u32& ret_msize, GLenum& ret_desc, u3
 
 #ifdef XR_PLATFORM_WEB
     const bool swapRedBlue = !gli::is_compressed(texture.format()) && gli::block_size(texture.format()) == 4
-        && format.Swizzles[gli::SWIZZLE_RED] == gli::SWIZZLE_BLUE;
+        && format.Swizzles[gli::SWIZZLE_RED] == GL_BLUE;
     xr_vector<u8> reordered;
     const auto texels = [&](size_t layer, size_t face, size_t level) -> const void*
     {

@@ -143,6 +143,10 @@ IC bool CBackend::ClearZBRect(GLuint zb, float depth, size_t numRects, const Ire
     return true;
 }
 
+#ifdef XR_PLATFORM_WEB
+inline SDeclaration* g_boundDeclaration = nullptr;
+#endif
+
 ICF void CBackend::set_Format(SDeclaration* _decl)
 {
     if (decl != _decl)
@@ -153,6 +157,10 @@ ICF void CBackend::set_Format(SDeclaration* _decl)
 #endif
         decl = _decl;
         CHK_GL(glBindVertexArray(_decl->dcl));
+#ifdef XR_PLATFORM_WEB
+        g_boundDeclaration = _decl;
+        vb = 0;
+#endif
 
         // Clear cached index buffer
         ib = 0;
@@ -255,8 +263,15 @@ ICF void CBackend::set_Vertices(GLuint _vb, u32 _vb_stride)
         else
         {
             CHK_GL(glBindBuffer(GL_ARRAY_BUFFER, vb));
+#ifdef XR_PLATFORM_WEB
+            if (g_boundDeclaration)
+            {
+                g_boundDeclaration->bound_vb = vb;
+                g_boundDeclaration->bound_stride = vb_stride;
+            }
+#else
             SetGLVertexPointer(decl);
-            vb_base_vertex = 0;
+#endif
         }
     }
 }
@@ -323,10 +338,16 @@ extern "C" void glDrawElementsInstancedBaseVertexBaseInstanceWEBGL(GLenum, GLsiz
 
 ICF void CBackend::SetBaseVertex(u32 baseV)
 {
-    if (vb_base_vertex == baseV)
+    SDeclaration* bound = g_boundDeclaration;
+    if (!bound)
         return;
-    vb_base_vertex = baseV;
-    SetGLVertexPointer(decl, baseV * vb_stride);
+    if (bound->pointer_vb == bound->bound_vb && bound->pointer_stride == bound->bound_stride && bound->pointer_base == baseV)
+        return;
+    bound->pointer_vb = bound->bound_vb;
+    bound->pointer_stride = bound->bound_stride;
+    bound->pointer_base = baseV;
+    CHK_GL(glBindBuffer(GL_ARRAY_BUFFER, bound->bound_vb));
+    SetGLVertexPointer(bound, baseV * bound->bound_stride);
 }
 
 ICF void CBackend::DrawIndexedBaseVertex(GLenum topology, u32 indexCount, u32 startI, u32 baseV)

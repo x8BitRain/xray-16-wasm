@@ -109,9 +109,6 @@ private:
     VertexBufferHandle vb;
     IndexBufferHandle ib;
     u32 vb_stride;
-#ifdef USE_OGL
-    u32 vb_base_vertex; // attribute pointer offset applied when base vertex draws are unavailable
-#endif
 
     // Pixel/Vertex constants
     alignas(16) R_constants constants;

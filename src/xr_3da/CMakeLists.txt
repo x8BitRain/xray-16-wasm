@@ -39,6 +39,7 @@ set_target_properties(xr_3da PROPERTIES
 
 if (EMSCRIPTEN)
     target_link_options(xr_3da PRIVATE ${XRAY_WEB_EXECUTABLE_LINK_OPTIONS})
+    set_property(TARGET xr_3da APPEND PROPERTY LINK_DEPENDS "${CMAKE_SOURCE_DIR}/web/pre.js")
     add_custom_target(web_dist ALL
         COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_SOURCE_DIR}/web/dist"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
