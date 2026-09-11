@@ -99,8 +99,9 @@ void CHW::CreateDevice(SDL_Window* hWnd)
     emscripten_webgl_init_context_attributes(&attributes);
     attributes.majorVersion = 2;
     attributes.minorVersion = 0;
-    attributes.depth = true;
-    attributes.stencil = true;
+    attributes.alpha = false;
+    attributes.depth = false;
+    attributes.stencil = false;
     attributes.antialias = false;
     attributes.powerPreference = EM_WEBGL_POWER_PREFERENCE_HIGH_PERFORMANCE;
 

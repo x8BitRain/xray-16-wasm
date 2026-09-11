@@ -56,6 +56,9 @@ IC void CBackend::ClearRT(GLuint rt, const Fcolor& color)
     CHK_GL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt, 0));
 
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+#ifdef XR_PLATFORM_WEB
+    colorwrite_mask = u32(-1);
+#endif
     glClearColor(color.r, color.g, color.b, color.a);
 
     CHK_GL(glClear(GL_COLOR_BUFFER_BIT));
@@ -106,6 +109,9 @@ IC bool CBackend::ClearRTRect(GLuint rt, const Fcolor& color, size_t numRects, c
 
         // Clear the color buffer without affecting the global state
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+#ifdef XR_PLATFORM_WEB
+        colorwrite_mask = u32(-1);
+#endif
         glClearColor(color.r, color.g, color.b, color.a);
 
         CHK_GL(glClear(GL_COLOR_BUFFER_BIT));
@@ -145,6 +151,15 @@ IC bool CBackend::ClearZBRect(GLuint zb, float depth, size_t numRects, const Ire
 
 #ifdef XR_PLATFORM_WEB
 inline SDeclaration* g_boundDeclaration = nullptr;
+inline GLuint g_boundVertexArray = 0;
+
+inline void BindVertexArray(GLuint vertexArray)
+{
+    if (g_boundVertexArray == vertexArray)
+        return;
+    CHK_GL(glBindVertexArray(vertexArray));
+    g_boundVertexArray = vertexArray;
+}
 #endif
 
 ICF void CBackend::set_Format(SDeclaration* _decl)
@@ -156,10 +171,12 @@ ICF void CBackend::set_Format(SDeclaration* _decl)
 		stat.decl++;
 #endif
         decl = _decl;
-        CHK_GL(glBindVertexArray(_decl->dcl));
 #ifdef XR_PLATFORM_WEB
+        BindVertexArray(_decl->dcl);
         g_boundDeclaration = _decl;
         vb = 0;
+#else
+        CHK_GL(glBindVertexArray(_decl->dcl));
 #endif
 
         // Clear cached index buffer
@@ -262,7 +279,6 @@ ICF void CBackend::set_Vertices(GLuint _vb, u32 _vb_stride)
         }
         else
         {
-            CHK_GL(glBindBuffer(GL_ARRAY_BUFFER, vb));
 #ifdef XR_PLATFORM_WEB
             if (g_boundDeclaration)
             {
@@ -270,6 +286,7 @@ ICF void CBackend::set_Vertices(GLuint _vb, u32 _vb_stride)
                 g_boundDeclaration->bound_stride = vb_stride;
             }
 #else
+            CHK_GL(glBindBuffer(GL_ARRAY_BUFFER, vb));
             SetGLVertexPointer(decl);
 #endif
         }
@@ -285,7 +302,12 @@ ICF void CBackend::set_Indices(GLuint _ib)
 		stat.ib++;
 #endif
         ib = _ib;
+#ifdef XR_PLATFORM_WEB
+        if (g_boundDeclaration)
+            g_boundDeclaration->bound_ib = ib;
+#else
         CHK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib));
+#endif
     }
 }
 
@@ -341,6 +363,17 @@ ICF void CBackend::SetBaseVertex(u32 baseV)
     SDeclaration* bound = g_boundDeclaration;
     if (!bound)
         return;
+    if (!IsStreamVertexBuffer(bound->bound_vb))
+    {
+        BindVertexArray(GetVertexArray(bound, baseV));
+        return;
+    }
+    BindVertexArray(bound->dcl);
+    if (bound->pointer_ib != bound->bound_ib)
+    {
+        bound->pointer_ib = bound->bound_ib;
+        CHK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bound->bound_ib));
+    }
     if (bound->pointer_vb == bound->bound_vb && bound->pointer_stride == bound->bound_stride && bound->pointer_base == baseV)
         return;
     bound->pointer_vb = bound->bound_vb;
@@ -355,6 +388,7 @@ ICF void CBackend::DrawIndexedBaseVertex(GLenum topology, u32 indexCount, u32 st
     const void* indices = (void*)(startI * sizeof(GLushort));
     if (HW.BaseVertexDrawSupported)
     {
+        SetBaseVertex(0);
         glDrawElementsInstancedBaseVertexBaseInstanceWEBGL(topology, indexCount, GL_UNSIGNED_SHORT, indices, 1, baseV, 0);
         return;
     }
@@ -571,8 +605,7 @@ void CBackend::set_pass_targets(const ref_rt& _1, const ref_rt& _2, const ref_rt
     set_RT(_3 ? _3->pRT : 0, 2);
     set_ZB(zb ? zb->pZRT : 0);
 
-    [[maybe_unused]] GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    VERIFY(status == GL_FRAMEBUFFER_COMPLETE);
+    VERIFY(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
     CHK_GL(glDrawBuffers(3, buffers));
 
     const D3D_VIEWPORT viewport = { 0, 0, curr_rt_width, curr_rt_height, 0.f, 1.f };

@@ -15,6 +15,10 @@
 
 #include <SDL.h>
 
+#ifdef XR_PLATFORM_WEB
+#include <emscripten.h>
+#endif
+
 ENGINE_API CRenderDevice Device;
 ENGINE_API CLoadScreenRenderer load_screen_renderer;
 
@@ -295,8 +299,15 @@ void CRenderDevice::ProcessFrame()
     else if (Paused() || g_pGameLevel == nullptr)
         updateDelta = 1000 / ps_fps_limit_in_menu;
 
+#ifdef XR_PLATFORM_WEB
+    if (frameTime < updateDelta)
+        emscripten_set_main_loop_timing(EM_TIMING_SETTIMEOUT, updateDelta);
+    else
+        emscripten_set_main_loop_timing(EM_TIMING_RAF, 1);
+#else
     if (frameTime < updateDelta)
         Sleep(updateDelta - frameTime);
+#endif
 
     if (!b_is_Active)
         Sleep(1);

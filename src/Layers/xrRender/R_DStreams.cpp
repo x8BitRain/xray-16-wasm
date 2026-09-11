@@ -80,7 +80,11 @@ void _VertexStream::Unlock(u32 Count, u32 Stride)
 #endif
     mPosition += Count * Stride;
 
+#ifdef XR_PLATFORM_WEB
+    pVB.Unmap(Count * Stride);
+#else
     pVB.Unmap();
+#endif
 }
 
 void _VertexStream::reset_begin()
@@ -145,7 +149,11 @@ void _IndexStream::Unlock(u32 RealCount)
 {
     PGO(Msg("PGO:IB_UNLOCK:%d", RealCount));
     mPosition += RealCount;
+#ifdef XR_PLATFORM_WEB
+    pIB.Unmap(RealCount * sizeof(u16));
+#else
     pIB.Unmap();
+#endif
 }
 
 void _IndexStream::reset_begin()

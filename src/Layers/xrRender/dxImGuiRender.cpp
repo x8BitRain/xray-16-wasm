@@ -53,6 +53,9 @@ void dxImGuiRender::Frame()
 
 void dxImGuiRender::Render(ImDrawData* data)
 {
+    if (data->CmdListsCount == 0)
+        return;
+
 #if defined(USE_DX11)
     ImGui_ImplDX11_RenderDrawData(data);
 #elif defined(USE_OGL)

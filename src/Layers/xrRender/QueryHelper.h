@@ -77,9 +77,9 @@ IC HRESULT GetData(GLuint query, void* pData, u32 DataSize)
     GLuint anySamplesPassed = 0;
     CHK_GL(glGetQueryObjectuiv(query, GL_QUERY_RESULT, &anySamplesPassed));
     if (DataSize == sizeof(GLint64))
-        *(GLint64*)pData = anySamplesPassed;
+        *(GLint64*)pData = anySamplesPassed ? std::numeric_limits<GLint64>::max() : 0;
     else
-        *(GLint*)pData = anySamplesPassed;
+        *(GLint*)pData = anySamplesPassed ? std::numeric_limits<GLint>::max() : 0;
     return S_OK;
 }
 #else

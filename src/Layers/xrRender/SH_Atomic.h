@@ -152,9 +152,11 @@ struct ECORE_API SDeclaration : public xr_resource_flagged
 #   ifdef XR_PLATFORM_WEB
     GLuint bound_vb{};
     u32 bound_stride{};
+    GLuint bound_ib{};
     GLuint pointer_vb{};
     u32 pointer_stride{};
     u32 pointer_base{};
+    GLuint pointer_ib{};
 #   endif
 #else
 #   error No graphics API selected or enabled!

@@ -154,11 +154,19 @@ private:
     u32 stencil_fail;
     u32 stencil_pass;
     u32 stencil_zfail;
+#ifdef XR_PLATFORM_WEB
+    static inline u32 colorwrite_mask;
+    static inline u32 fill_mode;
+    static inline u32 cull_mode;
+    static inline u32 z_enable;
+    static inline u32 z_func;
+#else
     u32 colorwrite_mask;
     u32 fill_mode;
     u32 cull_mode;
     u32 z_enable;
     u32 z_func;
+#endif
     u32 alpha_ref;
 
     // Lists

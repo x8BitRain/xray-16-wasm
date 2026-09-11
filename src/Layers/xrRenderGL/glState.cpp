@@ -39,6 +39,13 @@ glState* glState::Create()
     return xr_new<glState>();
 }
 
+#ifdef XR_PLATFORM_WEB
+namespace
+{
+GLuint boundSamplers[CTexture::mtMaxCombinedShaderTextures]{};
+}
+#endif
+
 //	TODO: OGL: Does the render cache provide enough state management?
 void glState::Apply()
 {
@@ -47,7 +54,15 @@ void glState::Apply()
     {
         if (m_samplerArray[stage])
         {
+#ifdef XR_PLATFORM_WEB
+            if (boundSamplers[stage] != m_samplerArray[stage])
+            {
+                boundSamplers[stage] = m_samplerArray[stage];
+                glBindSampler(stage, m_samplerArray[stage]);
+            }
+#else
             glBindSampler(stage, m_samplerArray[stage]);
+#endif
 
             if (!fsimilar(m_uiMipLODBias, ps_r__tf_Mipbias))
             {

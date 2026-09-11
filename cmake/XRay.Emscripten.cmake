@@ -50,9 +50,9 @@ set(XRAY_WEB_EXECUTABLE_LINK_OPTIONS
     -sENVIRONMENT=web,worker
     -sMODULARIZE
     -sEXPORT_ES6
-    -sASSERTIONS=1 # temporarily on in every configuration while the GLES port is stabilized
     --profiling-funcs
     "--pre-js=${CMAKE_SOURCE_DIR}/web/pre.js"
-    -sGL_ASSERTIONS=1 # temporarily on in every configuration while the GLES port is stabilized
+    $<$<CONFIG:Debug,Mixed>:-sASSERTIONS=1>
+    $<$<CONFIG:Debug,Mixed>:-sGL_ASSERTIONS=1>
     $<$<CONFIG:Debug,Mixed>:-gsource-map>
 )

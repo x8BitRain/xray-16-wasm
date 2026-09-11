@@ -7,6 +7,7 @@
 
 # Exclude web build files
 web/dist
+web/out
 
 # exclude binaries and temporary files
 [Bb]in/
