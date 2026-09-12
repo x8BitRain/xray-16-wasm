@@ -5,14 +5,6 @@ namespace xray::render::RENDER_NAMESPACE
 void CRender::render_lights(light_Package& LP)
 {
     ZoneScoped;
-    static u32 tempSeen = 0, tempCulled = 0, tempDrawn = 0, tempClip = 0, tempFrame = 0; // TEMP-FLASH
-    const auto tempIsTorch = [](const light* L) { return L->flags.type == IRender_Light::SPOT && L->flags.bShadow && L->position.distance_to(Device.vCameraPosition) < 2.f; }; // TEMP-FLASH
-    if (Device.dwFrame - tempFrame > 300) // TEMP-FLASH TODO: Remove once flashlight bug is fixed
-    {
-        Msg("TEMP-FLASH seen=%u culled=%u drawn=%u finalclip=%u", tempSeen, tempCulled, tempDrawn, tempClip); // TEMP-FLASH
-        tempSeen = tempCulled = tempDrawn = tempClip = 0; // TEMP-FLASH
-        tempFrame = Device.dwFrame; // TEMP-FLASH
-    }
 
     //////////////////////////////////////////////////////////////////////////
     // Refactor order based on ability to pack shadow-maps
@@ -24,8 +16,6 @@ void CRender::render_lights(light_Package& LP)
         {
             light* L = source[it];
             L->vis_update();
-            if (tempIsTorch(L)) // TEMP-FLASH
-                ++(L->vis.visible ? tempSeen : tempCulled); // TEMP-FLASH
             if (!L->vis.visible)
             {
                 source.erase(source.begin() + it);
@@ -118,12 +108,6 @@ void CRender::render_lights(light_Package& LP)
             const bool bNormal = !dsgraph.mapNormalPasses[0][0].empty() || !dsgraph.mapMatrixPasses[0][0].empty();
             const bool bSpecial = !dsgraph.mapNormalPasses[1][0].empty() || !dsgraph.mapMatrixPasses[1][0].empty() ||
                 !dsgraph.mapSorted.empty();
-            if (tempIsTorch(L)) // TEMP-FLASH
-            {
-                ++((bNormal || bSpecial) ? tempDrawn : tempClip); // TEMP-FLASH
-                if (!(bNormal || bSpecial) && tempClip <= 10) // TEMP-FLASH
-                    Msg("TEMP-FLASH finalclip frame %u batch %u", Device.dwFrame, batch_id); // TEMP-FLASH
-            }
             if (bNormal || bSpecial)
             {
                 PIX_EVENT_CTX(dsgraph.cmd_list, SHADOWED_LIGHT);

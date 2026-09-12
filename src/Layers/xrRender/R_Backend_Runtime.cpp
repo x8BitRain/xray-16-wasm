@@ -218,6 +218,9 @@ void CBackend::set_Textures(STextureList* textures_list)
                     load_surf->bind(*this, load_id);
                     //load_surf->Apply(load_id);
                     load_surf->last_slice = load_surf->curr_slice;
+#ifdef XR_PLATFORM_WEB
+                    occupied_texture_units |= 1u << load_id;
+#endif
                 }
             }
         }
@@ -244,6 +247,9 @@ void CBackend::set_Textures(STextureList* textures_list)
                     PGO(Msg("PGO:tex%d:%s", load_id, load_surf->cName.c_str()));
                     load_surf->bind(*this, load_id);
                     //load_surf->Apply(load_id);
+#ifdef XR_PLATFORM_WEB
+                    occupied_texture_units |= 1u << load_id;
+#endif
                 }
             }
         }
@@ -348,10 +354,17 @@ void CBackend::set_Textures(STextureList* textures_list)
     {
         if (usedPS & (1u << _last_ps))
             continue;
+#ifdef XR_PLATFORM_WEB
+        textures_ps[_last_ps] = nullptr;
+        if (!(occupied_texture_units & (1u << _last_ps)))
+            continue;
+        occupied_texture_units &= ~(1u << _last_ps);
+#else
         if (!textures_ps[_last_ps])
             continue;
 
         textures_ps[_last_ps] = nullptr;
+#endif
 #if defined(USE_DX11)
         // TODO: DX11: Optimise: set all resources at once
         ID3DShaderResourceView* pRes = 0;
@@ -373,10 +386,18 @@ void CBackend::set_Textures(STextureList* textures_list)
     {
         if (usedVS & (1u << _last_vs))
             continue;
+#ifdef XR_PLATFORM_WEB
+        const u32 unit = 1u << (CTexture::rstVertex + _last_vs);
+        textures_vs[_last_vs] = nullptr;
+        if (!(occupied_texture_units & unit))
+            continue;
+        occupied_texture_units &= ~unit;
+#else
         if (!textures_vs[_last_vs])
             continue;
 
         textures_vs[_last_vs] = nullptr;
+#endif
 #if defined(USE_DX11)
         // TODO: DX11: Optimise: set all resources at once
         ID3DShaderResourceView* pRes = 0;

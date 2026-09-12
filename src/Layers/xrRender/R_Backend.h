@@ -179,6 +179,9 @@ private:
     //CTexture* textures_vs[5]; // dmap + 4 vs
     CTexture* textures_vs[CTexture::mtMaxVertexShaderTextures]; // 4 vs
     CTexture* textures_gs[CTexture::mtMaxGeometryShaderTextures]; // 4 vs
+#ifdef XR_PLATFORM_WEB
+    static inline u32 occupied_texture_units = u32(-1);
+#endif
 #if defined(USE_DX11)
     CTexture* textures_hs[CTexture::mtMaxHullShaderTextures]; // 4 vs
     CTexture* textures_ds[CTexture::mtMaxDomainShaderTextures]; // 4 vs

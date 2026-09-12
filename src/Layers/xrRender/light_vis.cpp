@@ -80,19 +80,7 @@ void light::vis_update()
     const u32 frame = Device.dwFrame;
     const auto fragments = RImplementation.occq_get(vis.query_id);
     // Log					("",fragments);
-    static u32 tempResults = 0, tempFlips = 0, tempOne = 0, tempPending = 0, tempFrame = 0; // TEMP-FLICKER
-    const bool tempWasVisible = vis.visible; // TEMP-FLICKER
     vis.visible = (fragments > cullfragments);
-    ++tempResults; // TEMP-FLICKER
-    tempFlips += tempWasVisible != vis.visible; // TEMP-FLICKER
-    tempOne += fragments == 1; // TEMP-FLICKER
-    tempPending += fragments == decltype(fragments)(-1); // TEMP-FLICKER
-    if (frame - tempFrame > 300) // TEMP-FLICKER
-    {
-        Msg("TEMP-FLICKER results=%u flips=%u one=%u pending=%u", tempResults, tempFlips, tempOne, tempPending); // TEMP-FLICKER
-        tempResults = tempFlips = tempOne = tempPending = 0; // TEMP-FLICKER
-        tempFrame = frame; // TEMP-FLICKER
-    }
     vis.pending = false;
     if (vis.visible)
     {
