@@ -91,6 +91,12 @@ void glState::Apply()
         m_pDepthStencilState.StencilDepthFailOp
     );
 
+#ifdef XR_PLATFORM_WEB
+    RCache.set_DepthWrite(m_pDepthStencilState.DepthWriteMask ? TRUE : FALSE);
+    RCache.set_Blend(m_pBlendState.BlendEnable, m_pBlendState.SrcBlend, m_pBlendState.DestBlend,
+        m_pBlendState.SrcBlendAlpha, m_pBlendState.DestBlendAlpha, m_pBlendState.BlendOp,
+        m_pBlendState.BlendOpAlpha);
+#else
     CHK_GL(glDepthMask(m_pDepthStencilState.DepthWriteMask ? GL_TRUE : GL_FALSE));
 
     if (m_pBlendState.BlendEnable)
@@ -108,6 +114,7 @@ void glState::Apply()
         glStateUtils::ConvertBlendOp(m_pBlendState.BlendOp),
         glStateUtils::ConvertBlendOp(m_pBlendState.BlendOpAlpha)
     ));
+#endif
 
     RCache.set_ColorWriteEnable(m_pBlendState.ColorMask);
 }

@@ -77,6 +77,8 @@ void CBackend::Invalidate()
     M = nullptr;
     C = nullptr;
 
+    alpha_ref = u32(-1);
+#ifndef XR_PLATFORM_WEB
     stencil_enable = u32(-1);
     stencil_func = u32(-1);
     stencil_ref = u32(-1);
@@ -89,8 +91,8 @@ void CBackend::Invalidate()
     fill_mode = u32(-1);
     z_enable = u32(-1);
     z_func = u32(-1);
-    alpha_ref = u32(-1);
     colorwrite_mask = u32(-1);
+#endif
 
     // Since constant buffers are unmapped (for DirecX 10)
     // transform setting handlers should be unmapped too.

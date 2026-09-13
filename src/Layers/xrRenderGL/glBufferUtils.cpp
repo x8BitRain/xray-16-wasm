@@ -507,12 +507,8 @@ void VertexStreamBuffer::Destroy()
 void* VertexStreamBuffer::Map(size_t offset, size_t size, bool flush /*= false*/)
 {
     VERIFY(m_DeviceBuffer);
-    VERIFY(offset + size <= m_HostBuffer.size());
-    if (flush)
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, m_DeviceBuffer);
-        CHK_GL(glBufferData(GL_ARRAY_BUFFER, m_HostBuffer.size(), nullptr, GL_DYNAMIC_DRAW));
-    }
+    VERIFY(offset == 0 && size <= m_HostBuffer.size());
+    UNUSED(flush);
     m_MappedOffset = offset;
     m_MappedSize = size;
     return m_HostBuffer.data() + offset;
@@ -529,7 +525,7 @@ void VertexStreamBuffer::Unmap(size_t writtenSize)
     if (writtenSize == 0)
         return;
     glBindBuffer(GL_ARRAY_BUFFER, m_DeviceBuffer);
-    CHK_GL(glBufferSubData(GL_ARRAY_BUFFER, m_MappedOffset, writtenSize, m_HostBuffer.data() + m_MappedOffset));
+    CHK_GL(glBufferData(GL_ARRAY_BUFFER, writtenSize, m_HostBuffer.data() + m_MappedOffset, GL_STREAM_DRAW));
 }
 #else
 void* VertexStreamBuffer::Map(size_t offset, size_t size, bool flush /*= false*/)

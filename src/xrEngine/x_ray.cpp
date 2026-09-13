@@ -11,6 +11,7 @@
 
 #ifdef XR_PLATFORM_WEB
 #include <emscripten.h>
+#include "WebFramePacer.h"
 #endif
 
 #include "embedded_resources_management.h"
@@ -377,6 +378,8 @@ int CApplication::Run()
     emscripten_set_main_loop_arg([](void* application)
     {
         auto* app = static_cast<CApplication*>(application);
+        if (!g_webFramePacer.IsFrameDue(emscripten_get_now()))
+            return;
         if (!app->RunFrame())
         {
             emscripten_cancel_main_loop();

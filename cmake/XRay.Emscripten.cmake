@@ -1,5 +1,7 @@
 include_guard()
 
+option(XRAY_WEB_PROFILING "Keep wasm function names for profiling" OFF)
+
 set(XRAY_WEB_TARGET_FLAGS
     -pthread
     -m64
@@ -43,14 +45,14 @@ set(XRAY_WEB_EXECUTABLE_LINK_OPTIONS
     -sDEFAULT_PTHREAD_STACK_SIZE=4MB
     -sMIN_WEBGL_VERSION=2
     -sMAX_WEBGL_VERSION=2
-    -sFULL_ES3
     -sGL_ENABLE_GET_PROC_ADDRESS
     -sMALLOC=mimalloc
     -sEXIT_RUNTIME=0
     -sENVIRONMENT=web,worker
     -sMODULARIZE
     -sEXPORT_ES6
-    --profiling-funcs
+    --emit-symbol-map
+    $<$<BOOL:${XRAY_WEB_PROFILING}>:--profiling-funcs>
     "--pre-js=${CMAKE_SOURCE_DIR}/web/pre.js"
     $<$<CONFIG:Debug,Mixed>:-sASSERTIONS=1>
     $<$<CONFIG:Debug,Mixed>:-sGL_ASSERTIONS=1>

@@ -71,6 +71,9 @@ IC void CBackend::ClearZB(GLuint zb, float depth)
     CHK_GL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, zb, 0));
 
     glDepthMask(GL_TRUE);
+#ifdef XR_PLATFORM_WEB
+    depth_write_mask = TRUE;
+#endif
     glClearDepthf(depth);
 
     CHK_GL(glClear(GL_DEPTH_BUFFER_BIT));
@@ -86,6 +89,10 @@ IC void CBackend::ClearZB(GLuint zb, float depth, u8 stencil)
     glClearDepthf(depth);
 
     glStencilMask(~0);
+#ifdef XR_PLATFORM_WEB
+    depth_write_mask = TRUE;
+    stencil_writemask = u32(~0);
+#endif
     glClearStencil(stencil);
 
     CHK_GL(glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
@@ -139,6 +146,9 @@ IC bool CBackend::ClearZBRect(GLuint zb, float depth, size_t numRects, const Ire
         CHK_GL(glScissor(rects->left, bottom, rects->width(), rects->height()));
 
         glDepthMask(GL_TRUE);
+#ifdef XR_PLATFORM_WEB
+        depth_write_mask = TRUE;
+#endif
         glClearDepthf(depth);
 
         CHK_GL(glClear(GL_DEPTH_BUFFER_BIT));
@@ -466,6 +476,43 @@ IC void CBackend::SetViewport(const D3D_VIEWPORT& viewport) const
 IC void CBackend::set_Stencil(u32 _enable, u32 _func, u32 _ref, u32 _mask, u32 _writemask, u32 _fail, u32 _pass,
                               u32 _zfail)
 {
+#ifdef XR_PLATFORM_WEB
+    if (stencil_enable != _enable)
+    {
+        stencil_enable = _enable;
+        if (_enable)
+            glEnable(GL_STENCIL_TEST);
+        else
+            glDisable(GL_STENCIL_TEST);
+    }
+
+    if (!_enable)
+        return;
+
+    if (stencil_func != _func || stencil_ref != _ref || stencil_mask != _mask)
+    {
+        stencil_func = _func;
+        stencil_ref = _ref;
+        stencil_mask = _mask;
+        CHK_GL(glStencilFunc(glStateUtils::ConvertCmpFunction(_func), _ref, _mask));
+    }
+
+    if (stencil_writemask != _writemask)
+    {
+        stencil_writemask = _writemask;
+        CHK_GL(glStencilMask(_writemask));
+    }
+
+    if (stencil_fail != _fail || stencil_zfail != _zfail || stencil_pass != _pass)
+    {
+        stencil_fail = _fail;
+        stencil_zfail = _zfail;
+        stencil_pass = _pass;
+        CHK_GL(glStencilOp(glStateUtils::ConvertStencilOp(_fail),
+            glStateUtils::ConvertStencilOp(_zfail),
+            glStateUtils::ConvertStencilOp(_pass)));
+    }
+#else
     if (_enable)
     {
         glEnable(GL_STENCIL_TEST);
@@ -479,6 +526,7 @@ IC void CBackend::set_Stencil(u32 _enable, u32 _func, u32 _ref, u32 _mask, u32 _
     {
         glDisable(GL_STENCIL_TEST);
     }
+#endif
 }
 
 IC void CBackend::set_Z(u32 _enable)
@@ -501,6 +549,45 @@ IC void CBackend::set_ZFunc(u32 _func)
         CHK_GL(glDepthFunc(glStateUtils::ConvertCmpFunction(_func)));
     }
 }
+
+#ifdef XR_PLATFORM_WEB
+IC void CBackend::set_DepthWrite(u32 _enable)
+{
+    if (depth_write_mask == _enable)
+        return;
+    depth_write_mask = _enable;
+    CHK_GL(glDepthMask(_enable ? GL_TRUE : GL_FALSE));
+}
+
+IC void CBackend::set_Blend(u32 _enable, u32 _src, u32 _dst, u32 _srcAlpha, u32 _dstAlpha, u32 _op, u32 _opAlpha)
+{
+    if (blend_enable != _enable)
+    {
+        blend_enable = _enable;
+        if (_enable)
+            glEnable(GL_BLEND);
+        else
+            glDisable(GL_BLEND);
+    }
+
+    if (blend_src != _src || blend_dst != _dst || blend_src_alpha != _srcAlpha || blend_dst_alpha != _dstAlpha)
+    {
+        blend_src = _src;
+        blend_dst = _dst;
+        blend_src_alpha = _srcAlpha;
+        blend_dst_alpha = _dstAlpha;
+        CHK_GL(glBlendFuncSeparate(glStateUtils::ConvertBlendArg(_src), glStateUtils::ConvertBlendArg(_dst),
+            glStateUtils::ConvertBlendArg(_srcAlpha), glStateUtils::ConvertBlendArg(_dstAlpha)));
+    }
+
+    if (blend_op != _op || blend_op_alpha != _opAlpha)
+    {
+        blend_op = _op;
+        blend_op_alpha = _opAlpha;
+        CHK_GL(glBlendEquationSeparate(glStateUtils::ConvertBlendOp(_op), glStateUtils::ConvertBlendOp(_opAlpha)));
+    }
+}
+#endif
 
 IC void CBackend::set_AlphaRef(u32 _value)
 {

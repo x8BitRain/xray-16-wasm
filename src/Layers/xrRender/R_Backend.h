@@ -146,6 +146,29 @@ private:
 #   endif
 #endif // DEBUG
 
+#ifdef XR_PLATFORM_WEB
+    static inline u32 stencil_enable = u32(-1);
+    static inline u32 stencil_func = u32(-1);
+    static inline u32 stencil_ref = u32(-1);
+    static inline u32 stencil_mask = u32(-1);
+    static inline u32 stencil_writemask = u32(-1);
+    static inline u32 stencil_fail = u32(-1);
+    static inline u32 stencil_pass = u32(-1);
+    static inline u32 stencil_zfail = u32(-1);
+    static inline u32 colorwrite_mask = u32(-1);
+    static inline u32 fill_mode = u32(-1);
+    static inline u32 cull_mode = u32(-1);
+    static inline u32 z_enable = u32(-1);
+    static inline u32 z_func = u32(-1);
+    static inline u32 depth_write_mask = u32(-1);
+    static inline u32 blend_enable = u32(-1);
+    static inline u32 blend_src = u32(-1);
+    static inline u32 blend_dst = u32(-1);
+    static inline u32 blend_src_alpha = u32(-1);
+    static inline u32 blend_dst_alpha = u32(-1);
+    static inline u32 blend_op = u32(-1);
+    static inline u32 blend_op_alpha = u32(-1);
+#else
     u32 stencil_enable;
     u32 stencil_func;
     u32 stencil_ref;
@@ -154,13 +177,6 @@ private:
     u32 stencil_fail;
     u32 stencil_pass;
     u32 stencil_zfail;
-#ifdef XR_PLATFORM_WEB
-    static inline u32 colorwrite_mask;
-    static inline u32 fill_mode;
-    static inline u32 cull_mode;
-    static inline u32 z_enable;
-    static inline u32 z_func;
-#else
     u32 colorwrite_mask;
     u32 fill_mode;
     u32 cull_mode;
@@ -434,6 +450,10 @@ public:
                         u32 _zfail = D3DSTENCILOP_KEEP);
     IC void set_Z(u32 _enable);
     IC void set_ZFunc(u32 _func);
+#ifdef XR_PLATFORM_WEB
+    IC void set_DepthWrite(u32 _enable);
+    IC void set_Blend(u32 _enable, u32 _src, u32 _dst, u32 _srcAlpha, u32 _dstAlpha, u32 _op, u32 _opAlpha);
+#endif
     IC void set_AlphaRef(u32 _value);
     IC void set_ColorWriteEnable(
         u32 _mask = D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE |
