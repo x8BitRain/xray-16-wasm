@@ -53,7 +53,7 @@ set(XRAY_WEB_EXECUTABLE_LINK_OPTIONS
     -sEXPORT_ES6
     --emit-symbol-map
     $<$<BOOL:${XRAY_WEB_PROFILING}>:--profiling-funcs>
-    "--pre-js=${XRAY_SOURCE_DIR}/web/pre.js"
+    "--pre-js=${XRAY_SOURCE_DIR}/misc/web/pre.js"
     $<$<CONFIG:Debug,Mixed>:-sASSERTIONS=1>
     $<$<CONFIG:Debug,Mixed>:-sGL_ASSERTIONS=1>
     $<$<CONFIG:Debug,Mixed>:-gsource-map>

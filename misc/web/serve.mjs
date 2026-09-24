@@ -2,7 +2,7 @@ import { createServer } from 'node:http';
 import { stat, readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join, extname, resolve } from 'node:path';
 
-const root = resolve(process.argv[2] ?? 'web/dist');
+const root = resolve(process.argv[2] ?? 'misc/web/dist');
 const port = Number(process.argv[3] ?? 8080);
 
 const mime = {
@@ -26,8 +26,8 @@ createServer(async (req, res) => {
     const name = urlPath.slice('/save/'.length).replace(/[^\w.-]/g, '_');
     const chunks = [];
     for await (const chunk of req) chunks.push(chunk);
-    await mkdir('web/out', { recursive: true });
-    await writeFile(join('web/out', name), Buffer.concat(chunks));
+    await mkdir('misc/web/out', { recursive: true });
+    await writeFile(join('misc/web/out', name), Buffer.concat(chunks));
     res.writeHead(200, headers).end('saved ' + name);
     return;
   }

@@ -19,16 +19,16 @@ emcmake cmake --preset web-release
 cmake --build --preset web-release
 ```
 
-Built files are output in `web/dist`
+Built files are output in `misc/web/dist`
 
 ```sh
-node web/tools/build_dist.mjs
+node misc/web/tools/build_dist.mjs
 ```
 
 ## Run
 
 ```sh
-node web/serve.mjs web/dist 8081
+node misc/web/serve.mjs misc/web/dist 8081
 ```
 
 Open http://localhost:8081 in Chrome only. Select your game folder and click launch.
@@ -42,7 +42,7 @@ You can skip the intro in CoP by using this commandline arg:
 ## Validating shaders offline
 
 ```sh
-./web/tools/essl_check.sh          # rewrites every GL shader and runs glslangValidator
-python3 web/tools/essl_report.py   # unique error sites, mapped back to the original files
+./misc/web/tools/essl_check.sh          # rewrites every GL shader and runs glslangValidator
+python3 misc/web/tools/essl_report.py   # unique error sites, mapped back to the original files
 ```
 

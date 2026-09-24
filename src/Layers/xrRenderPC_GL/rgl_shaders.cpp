@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #ifdef XR_PLATFORM_WEB
-#include "rgl_essl_rewrite.h"
+#include "rgl_essl_web.h"
 #endif
 #include "r2.h"
 

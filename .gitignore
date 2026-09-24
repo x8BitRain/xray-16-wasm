@@ -6,8 +6,8 @@
 !.vscode
 
 # Exclude web build files
-web/dist
-web/out
+misc/web/dist
+misc/web/out
 
 # exclude binaries and temporary files
 [Bb]in/

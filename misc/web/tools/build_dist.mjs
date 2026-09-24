@@ -3,8 +3,8 @@ import { join, relative, dirname, resolve, sep } from 'node:path';
 import { createHash } from 'node:crypto';
 import { crc32 } from 'node:zlib';
 
-const repo = resolve(import.meta.dirname, '../..');
-const distDir = join(repo, 'web/dist');
+const repo = resolve(import.meta.dirname, '../../..');
+const distDir = join(repo, 'misc/web/dist');
 const outDir = join(distDir, 'engine');
 const gamedata = join(repo, 'res/gamedata');
 const PLUS_ARCHIVE = 'patches/xpatch_openxray_plus.db';
@@ -85,8 +85,8 @@ async function packOpenXRayPlus(files) {
 
 await rm(outDir, { recursive: true, force: true });
 await mkdir(outDir, { recursive: true });
-for (const name of await readdir(join(repo, 'web/page')))
-  await copyFile(join(repo, 'web/page', name), join(distDir, name));
+for (const name of await readdir(join(repo, 'misc/web/page')))
+  await copyFile(join(repo, 'misc/web/page', name), join(distDir, name));
 
 const files = [];
 async function copyLoose(src, rel) {
@@ -110,4 +110,4 @@ await writeFile(join(outDir, PLUS_ARCHIVE), archive);
 files.push({ path: PLUS_ARCHIVE, size: archive.length });
 
 await writeFile(join(distDir, 'engine_data.json'), JSON.stringify({ files, retired }));
-console.log(`web/dist: page + ${files.length - 1} loose engine files + ${PLUS_ARCHIVE} (${plusSources.length} files)`);
+console.log(`misc/web/dist: page + ${files.length - 1} loose engine files + ${PLUS_ARCHIVE} (${plusSources.length} files)`);

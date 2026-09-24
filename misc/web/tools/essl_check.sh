@@ -1,11 +1,11 @@
 #!/bin/sh
 set -e
-cd "$(dirname "$0")/../.."
+cd "$(dirname "$0")/../../.."
 ROOT=res/gamedata/shaders/gl
 OUT=build/essl_check
 mkdir -p "$OUT"
 rm -f "$OUT"/*.log
-clang++ -std=c++17 -O1 -o "$OUT/essl_check" web/tools/essl_check.cpp
+clang++ -std=c++17 -O1 -o "$OUT/essl_check" misc/web/tools/essl_check.cpp
 
 DEFINES="SMAP_size=2048 FP16_FILTER FP16_BLEND USE_HWSMAP USE_HWSMAP_PCF USE_BRANCHING USE_VTF USE_SOFT_WATER
 SSR_QUALITY=3 SSR_HALF_DEPTH SSR_JITTER USE_SOFT_PARTICLES USE_DOF SUN_SHAFTS_QUALITY=2 SSAO_QUALITY=3 SUN_QUALITY=1
