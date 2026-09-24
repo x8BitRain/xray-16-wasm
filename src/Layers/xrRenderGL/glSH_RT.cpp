@@ -98,7 +98,12 @@ void CRT::resolve_into(CRT& destination) const
     RCache.set_RT(pRT, 0);
     RCache.set_RT(destination.pRT, 1);
 
+#ifdef XR_PLATFORM_WEB
     VERIFY(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+#else
+    [[maybe_unused]] GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    VERIFY(status == GL_FRAMEBUFFER_COMPLETE);
+#endif
     CHK_GL(glDrawBuffers(std::size(buffers), buffers));
 
     CHK_GL(glBlitFramebuffer(0, 0, dwWidth, dwHeight, 0, 0, destination.dwWidth, destination.dwHeight,

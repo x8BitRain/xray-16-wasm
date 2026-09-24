@@ -58,7 +58,7 @@ u32 calc_texture_size(int lod, u32 mip_cnt, size_t orig_size)
     return iFloor(res);
 }
 
-GLuint CRender::texture_load(LPCSTR fRName, u32& ret_msize, GLenum& ret_desc, u32& ret_width, u32& ret_height)
+GLuint CRender::texture_load(pcstr fRName, u32& ret_msize, GLenum& ret_desc, u32& ret_width, u32& ret_height)
 {
     ret_msize = 0;
     R_ASSERT1_CURE(fRName && fRName[0], { return 0; });

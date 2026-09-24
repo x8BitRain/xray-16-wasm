@@ -123,7 +123,8 @@ void CHW::CreateDevice(SDL_Window* hWnd)
         ZoneScopedN("gladLoadGLES2");
         version = gladLoadGLES2(reinterpret_cast<GLADloadfunc>(emscripten_webgl_get_proc_address));
     }
-    BaseVertexDrawSupported = emscripten_webgl_enable_extension(m_webgl, "WEBGL_draw_instanced_base_vertex_base_instance");
+    BaseVertexDrawSupported =
+        emscripten_webgl_enable_extension(m_webgl, "WEBGL_draw_instanced_base_vertex_base_instance");
     Msg("* WebGL base vertex draws: %s", BaseVertexDrawSupported ? "extension" : "attribute re-pointing");
 #else
     m_context = SDL_GL_CreateContext(m_window);
@@ -179,9 +180,11 @@ void CHW::CreateDevice(SDL_Window* hWnd)
     Msg("* GPU OpenGL shading language version: %s", ShadingVersion);
     Msg("* GPU OpenGL VTF units: [%d] CTI units: [%d]", iMaxVTFUnits, iMaxCTIUnits);
 
+#ifdef XR_PLATFORM_WEB
     TextureUploadUnit = u32(iMaxCTIUnits) - 1;
     R_ASSERT2(TextureUploadUnit >= CTexture::rstVertex + CTexture::mtMaxVertexShaderTextures,
         "too few texture units for a dedicated upload unit");
+#endif
 
     ComputeShadersSupported = false; // XXX: Implement compute shaders support
 
@@ -349,6 +352,7 @@ void CHW::EndPixEvent() const
 }
 } // namespace xray::render::RENDER_NAMESPACE
 
+#ifdef XR_PLATFORM_WEB
 namespace xray::render::RENDER_NAMESPACE
 {
 texture_upload_unit::texture_upload_unit(GLenum target) : target(target)
@@ -361,3 +365,4 @@ texture_upload_unit::~texture_upload_unit()
     CHK_GL(glBindTexture(target, 0));
 }
 } // namespace xray::render::RENDER_NAMESPACE
+#endif

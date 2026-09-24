@@ -366,7 +366,8 @@ IC u32 GetIndexCount(D3DPRIMITIVETYPE T, u32 iPrimitiveCount)
 }
 
 #ifdef XR_PLATFORM_WEB
-extern "C" void glDrawElementsInstancedBaseVertexBaseInstanceWEBGL(GLenum, GLsizei, GLenum, const void*, GLsizei, GLint, GLuint);
+extern "C" void glDrawElementsInstancedBaseVertexBaseInstanceWEBGL(
+    GLenum, GLsizei, GLenum, const void*, GLsizei, GLint, GLuint);
 
 ICF void CBackend::SetBaseVertex(u32 baseV)
 {
@@ -384,7 +385,8 @@ ICF void CBackend::SetBaseVertex(u32 baseV)
         bound->pointer_ib = bound->bound_ib;
         CHK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bound->bound_ib));
     }
-    if (bound->pointer_vb == bound->bound_vb && bound->pointer_stride == bound->bound_stride && bound->pointer_base == baseV)
+    if (bound->pointer_vb == bound->bound_vb && bound->pointer_stride == bound->bound_stride
+        && bound->pointer_base == baseV)
         return;
     bound->pointer_vb = bound->bound_vb;
     bound->pointer_stride = bound->bound_stride;
@@ -399,7 +401,8 @@ ICF void CBackend::DrawIndexedBaseVertex(GLenum topology, u32 indexCount, u32 st
     if (HW.BaseVertexDrawSupported)
     {
         SetBaseVertex(0);
-        glDrawElementsInstancedBaseVertexBaseInstanceWEBGL(topology, indexCount, GL_UNSIGNED_SHORT, indices, 1, baseV, 0);
+        glDrawElementsInstancedBaseVertexBaseInstanceWEBGL(
+            topology, indexCount, GL_UNSIGNED_SHORT, indices, 1, baseV, 0);
         return;
     }
     SetBaseVertex(baseV);
@@ -692,7 +695,12 @@ void CBackend::set_pass_targets(const ref_rt& _1, const ref_rt& _2, const ref_rt
     set_RT(_3 ? _3->pRT : 0, 2);
     set_ZB(zb ? zb->pZRT : 0);
 
+#ifdef XR_PLATFORM_WEB
     VERIFY(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+#else
+    [[maybe_unused]] GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    VERIFY(status == GL_FRAMEBUFFER_COMPLETE);
+#endif
     CHK_GL(glDrawBuffers(3, buffers));
 
     const D3D_VIEWPORT viewport = { 0, 0, curr_rt_width, curr_rt_height, 0.f, 1.f };

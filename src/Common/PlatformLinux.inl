@@ -143,7 +143,8 @@ typedef unsigned long long int ULARGE_INTEGER;
 typedef struct _EXCEPTION_POINTERS {
 } EXCEPTION_POINTERS, *PEXCEPTION_POINTERS;
 
-#if defined(XR_ARCHITECTURE_X64) || defined(XR_ARCHITECTURE_ARM64) || defined(XR_ARCHITECTURE_E2K) || defined(XR_ARCHITECTURE_WASM64)
+#if defined(XR_ARCHITECTURE_X64) || defined(XR_ARCHITECTURE_ARM64) || defined(XR_ARCHITECTURE_E2K) \
+    || defined(XR_ARCHITECTURE_WASM64)
 typedef int64_t INT_PTR;
 typedef uint64_t UINT_PTR;
 typedef int64_t LONG_PTR;

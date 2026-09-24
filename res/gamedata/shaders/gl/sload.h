@@ -64,7 +64,7 @@ void UpdateTC( inout p_bumped I )
 		float	fCurrHeight			= 0.0;
 		float	fCurrentBound		= 1.0;
 
-		for( int i=0; i<int(nNumSteps); ++i )
+		for( int i=0; float(i)<nNumSteps; ++i )
 		{
 			if (fCurrHeight < fCurrentBound)
 			{	

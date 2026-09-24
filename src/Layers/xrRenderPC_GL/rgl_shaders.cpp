@@ -1,5 +1,7 @@
 #include "stdafx.h"
+#ifdef XR_PLATFORM_WEB
 #include "rgl_essl_rewrite.h"
+#endif
 #include "r2.h"
 
 #include "Layers/xrRender/ShaderResourceTraits.h"

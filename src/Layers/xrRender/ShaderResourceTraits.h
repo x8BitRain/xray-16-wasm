@@ -137,21 +137,14 @@ static GLuint GLDepthOnlyFragmentShader()
 
 static GLuint GLLinkMonolithicProgram(pcstr name, GLuint ps, GLuint vs, GLuint gs)
 {
+#ifdef XR_PLATFORM_WEB
     if (!vs)
     {
         Log("! shader program not linked, the vertex stage failed to compile:", name);
         return 0;
     }
-
-#ifdef XR_PLATFORM_WEB
     if (!ps)
         ps = GLDepthOnlyFragmentShader();
-#else
-    if (!ps)
-    {
-        Log("! shader program not linked, the pixel stage failed to compile:", name);
-        return 0;
-    }
 #endif
 
     const GLuint program = glCreateProgram();

@@ -70,15 +70,20 @@ public:
     pcstr OpenGLVersionString;
     pcstr ShadingVersion;
     bool ComputeShadersSupported;
-
+#ifdef XR_PLATFORM_WEB
     u32 TextureUploadUnit{};
+#endif
 };
 
 struct texture_upload_unit
 {
+#ifdef XR_PLATFORM_WEB
     const GLenum target;
     explicit texture_upload_unit(GLenum target);
     ~texture_upload_unit();
+#else
+    explicit texture_upload_unit(GLenum) {}
+#endif
 };
 
 extern ECORE_API CHW HW;

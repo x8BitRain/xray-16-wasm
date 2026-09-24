@@ -25,7 +25,7 @@ target_link_options(OpenAL::OpenAL INTERFACE -lopenal)
 target_include_directories(OpenAL::OpenAL INTERFACE "${EMSCRIPTEN_SYSROOT}/include/AL")
 set(JPEG_FOUND TRUE)
 
-add_subdirectory("${CMAKE_SOURCE_DIR}/Externals/web" "${CMAKE_BINARY_DIR}/Externals/web")
+add_subdirectory("${XRAY_SOURCE_DIR}/Externals/web" "${CMAKE_BINARY_DIR}/Externals/web")
 
 set(LUA_INCLUDE_DIR "${XRAY_WEB_LUA_INCLUDE_DIR}" CACHE PATH "" FORCE)
 set(LUA_LIBRARY xrLua51 CACHE STRING "" FORCE)
@@ -53,7 +53,7 @@ set(XRAY_WEB_EXECUTABLE_LINK_OPTIONS
     -sEXPORT_ES6
     --emit-symbol-map
     $<$<BOOL:${XRAY_WEB_PROFILING}>:--profiling-funcs>
-    "--pre-js=${CMAKE_SOURCE_DIR}/web/pre.js"
+    "--pre-js=${XRAY_SOURCE_DIR}/web/pre.js"
     $<$<CONFIG:Debug,Mixed>:-sASSERTIONS=1>
     $<$<CONFIG:Debug,Mixed>:-sGL_ASSERTIONS=1>
     $<$<CONFIG:Debug,Mixed>:-gsource-map>

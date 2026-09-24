@@ -25,8 +25,6 @@ class CALifeUpdateManager : public CALifeSwitchManager,
 {
 private:
     bool m_first_time;
-    bool m_startup_jump_done{};
-    u32 m_startup_jump_delay{};
 
 protected:
     u64 m_max_process_time;
@@ -61,7 +59,6 @@ public:
     void set_switch_offline(ALife::_OBJECT_ID id, bool value);
     void set_interactive(ALife::_OBJECT_ID id, bool value);
     void jump_to_level(LPCSTR level_name) const;
-    void jump_to_startup_level();
     void teleport_object(
         ALife::_OBJECT_ID id, GameGraph::_GRAPH_ID game_vertex_id, u32 level_vertex_id, const Fvector& position);
     void add_restriction(ALife::_OBJECT_ID id, ALife::_OBJECT_ID restriction_id,

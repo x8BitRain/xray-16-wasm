@@ -405,6 +405,18 @@ void CUITaskWnd::OnTask2DbClicked(CUIWindow*, void*)
 
 void CUITaskWnd::Switch_ShowMapLegend() const { m_map_legend_wnd->Show(!m_map_legend_wnd->IsShown()); }
 
+bool CUITaskWnd::FillDebugTree(const CUIDebugState& debugState)
+{
+#ifndef MASTER_GOLD
+    bool open = CUIWindow::FillDebugTree(debugState);
+    open |= hint_wnd->FillDebugTree(debugState);
+    return open;
+#else
+    UNUSED(debugState);
+    return false;
+#endif
+}
+
 // --------------------------------------------------------------------------------------------------
 CUITaskItem::CUITaskItem() : CUIWindow("CUITaskItem"), m_hint_wt(500) {}
 
@@ -441,7 +453,8 @@ void CUITaskItem::InitTask(CGameTask* task)
     {
         if (task)
         {
-            S->InitTexture(task->m_icon_texture_name.c_str());
+            if (S->InitTexture(task->m_icon_texture_name.c_str()))
+                S->TextureOn();
             S->SetStretchTexture(true);
             m_info["t_icon_over"]->Show(true);
         }

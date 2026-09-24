@@ -402,7 +402,6 @@ bool CApplication::RunFrame()
         return false;
     }
 
-
     {
         FrameMarkStart(FRAME_MARK_APPLICATION_RUN);
         bool canCallActivate = false;

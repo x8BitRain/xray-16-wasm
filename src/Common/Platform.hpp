@@ -3,6 +3,11 @@
 #if defined(_WIN32)
 #   define XR_PLATFORM_WINDOWS
 #   define _XRAY_PLATFORM_MARKER "Windows"
+#elif defined(__ANDROID__)
+#   define XR_PLATFORM_ANDROID
+#   define XR_PLATFORM_LINUX
+#   define XR_PLATFORM_POSIX
+#   define _XRAY_PLATFORM_MARKER "Android"
 #elif defined(__EMSCRIPTEN__)
 #   define XR_PLATFORM_WEB
 #   define XR_PLATFORM_POSIX
@@ -73,6 +78,11 @@
 #   define _XRAY_ARCHITECTURE_MARKER "wasm32"
 #else
 #   error Unsupported architecture
+#endif
+
+#if defined(XR_ARCHITECTURE_X86) || defined(XR_ARCHITECTURE_X64) || defined(XR_ARCHITECTURE_E2K) \
+    || defined(XR_ARCHITECTURE_PPC64) || defined(XR_ARCHITECTURE_WASM64) || defined(XR_ARCHITECTURE_WASM32)
+#   define XR_ARCHITECTURE_HAS_SSE
 #endif
 
 #if defined(_MSC_VER)

@@ -212,8 +212,10 @@ void CTexture::Load()
             CHK_GL(glBufferData(GL_PIXEL_UNPACK_BUFFER, flags.MemoryUsage, nullptr, GL_STREAM_DRAW));
             glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
+#ifdef XR_PLATFORM_WEB
             while (glGetError() != GL_NO_ERROR)
                 ; // discard errors left by earlier calls
+#endif
 
             const texture_upload_unit uploadUnit(GL_TEXTURE_2D);
             glGenTextures(1, &pTexture);

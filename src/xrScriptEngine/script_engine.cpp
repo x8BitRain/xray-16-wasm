@@ -765,7 +765,7 @@ void CScriptEngine::setup_auto_load()
     // lua_settop(lua(), 0);
 }
 
-#ifdef XRAY_NO_LUAJIT
+#if !XRAY_USE_LUAJIT
 static int luajit_compatible_random(lua_State* L)
 {
     const lua_Number r = lua_Number(rand() % RAND_MAX) / lua_Number(RAND_MAX);
@@ -795,11 +795,87 @@ struct luajit
 
     static void allow_escape_sequences(bool allowed)
     {
-#ifndef XRAY_NO_LUAJIT
+#if XRAY_USE_LUAJIT
         lj_allow_escape_sequences(allowed ? 1 : 0);
+#else
+        // Vanilla Lua 5.1 has no runtime switch for this LuaJIT extension.
+        (void)allowed;
 #endif
     }
 };
+
+// Custom `require` loader resolving modules through the engine file system.
+// Unlike the default package.path loader, it also finds scripts packed inside game archives,
+// with loose gamedata files taking priority over archived ones,
+// consistently with how the engine resolves every other game asset.
+//
+// Example:
+// `local example = require("scripts.folder.file")` imports `gamedata\scripts\folder\file.script`
+static int gamedata_module_loader(lua_State* L)
+{
+    pcstr moduleName = lua_tostring(L, 1);
+
+    string_path fileName;
+    xr_strcpy(fileName, moduleName);
+    for (char* c = fileName; *c; ++c)
+    {
+        if (*c == '.')
+            *c = _DELIMITER;
+    }
+    xr_strcat(fileName, ".script");
+
+    string_path filePath;
+    FS.update_path(filePath, "$game_data$", fileName);
+
+    IReader* reader = FS.r_open(filePath);
+    if (!reader)
+    {
+        // Not an error: report the candidate path and let the remaining searchers try
+        lua_pushfstring(L, "\n\tno file '%s' in engine file system", filePath);
+        return 1;
+    }
+
+    string_path chunkName;
+    strconcat(sizeof(chunkName), chunkName, "@", filePath);
+
+    const int errorCode = luaL_loadbuffer(L, static_cast<LPCSTR>(reader->pointer()), reader->length(), chunkName);
+    FS.r_close(reader);
+
+    if (errorCode)
+    {
+        return lua_error(L);
+    }
+
+    return 1;
+}
+
+// Adds gamedata folder as module root for lua `require` and allows usage of built-in lua module system.
+//
+// Example:
+// `local example = require("scripts.folder.file")` tries to import `gamedata\scripts\folder\file.script`
+static void setup_gamedata_module_loading(lua_State* L)
+{
+    // Engine file system loader, resolves modules packed inside game archives as well.
+    // Registered after package.preload (index 1), before the default package.path loader:
+    // table.insert(package.loaders, 2, gamedata_module_loader)
+    lua_getglobal(L, "table");
+    lua_getfield(L, -1, "insert");
+    lua_remove(L, -2);
+    lua_getglobal(L, "package");
+    lua_getfield(L, -1, "loaders");
+    lua_remove(L, -2);
+    lua_pushinteger(L, 2);
+    lua_pushcfunction(L, gamedata_module_loader);
+    lua_call(L, 3, 0);
+
+    string_path gamedataPath;
+    string_path packagePath;
+
+    FS.update_path(gamedataPath, "$game_data$", "?.script;");
+    xr_sprintf(packagePath, "package.path = package.path .. [[%s]]", gamedataPath);
+
+    luaL_dostring(L, packagePath);
+}
 
 void CScriptEngine::init(export_func exporter, bool loadGlobalNamespace)
 {
@@ -848,14 +924,14 @@ void CScriptEngine::init(export_func exporter, bool loadGlobalNamespace)
     luajit::open_lib(lua(), LUA_IOLIBNAME, luaopen_io);
     luajit::open_lib(lua(), LUA_OSLIBNAME, luaopen_os);
     luajit::open_lib(lua(), LUA_MATHLIBNAME, luaopen_math);
-#ifdef XRAY_NO_LUAJIT
+#if !XRAY_USE_LUAJIT
     lua_getglobal(lua(), LUA_MATHLIBNAME);
     lua_pushcfunction(lua(), luajit_compatible_random);
     lua_setfield(lua(), -2, "random");
     lua_pop(lua(), 1);
 #endif
     luajit::open_lib(lua(), LUA_STRLIBNAME, luaopen_string);
-#ifndef XRAY_NO_LUAJIT
+#if XRAY_USE_LUAJIT
     luajit::open_lib(lua(), LUA_BITLIBNAME, luaopen_bit);
     luajit::open_lib(lua(), LUA_FFILIBNAME, luaopen_ffi);
 #endif
@@ -879,20 +955,7 @@ void CScriptEngine::init(export_func exporter, bool loadGlobalNamespace)
             luaL_dostring(lua(), mathRandom);
     }
 
-    // Adds gamedata folder as module root for lua `require` and allows usage of built-in lua module system.
-    // Notes:
-    // - Does not resolve files inside archived game files
-    // Example:
-    // `local example = require("scripts.folder.file")` tries to import `gamedata\scripts\folder\file.script`
-    {
-        string_path gamedataPath;
-        string_path packagePath;
-
-        FS.update_path(gamedataPath, "$game_data$", "?.script;");
-        xr_sprintf(packagePath, "package.path = package.path .. [[%s]]", gamedataPath);
-
-        luaL_dostring(lua(), packagePath);
-     }
+    setup_gamedata_module_loading(lua());
 
     // XXX nitrocaster: with vanilla scripts, '-nojit' option requires script profiler to be disabled. The reason
     // is that lua hooks somehow make 'super' global unavailable (is's used all over the vanilla scripts).
@@ -902,7 +965,7 @@ void CScriptEngine::init(export_func exporter, bool loadGlobalNamespace)
     // end
     //
     // Update: '-nojit' option adds garbage to stack and luabind calls fail
-#ifndef XRAY_NO_LUAJIT
+#if XRAY_USE_LUAJIT
     if (!strstr(Core.Params, ARGUMENT_ENGINE_NOJIT))
     {
         luajit::open_lib(lua(), LUA_JITLIBNAME, luaopen_jit);

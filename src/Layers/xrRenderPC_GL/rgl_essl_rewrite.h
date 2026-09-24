@@ -129,7 +129,8 @@ inline bool guard_conditional(std::string_view line, const std::vector<std::stri
 
 using conditional_stack = std::vector<std::vector<std::string>>;
 
-inline void track_conditional(const std::vector<std::string>& tokens, const std::string& directive, conditional_stack& stack)
+inline void track_conditional(
+    const std::vector<std::string>& tokens, const std::string& directive, conditional_stack& stack)
 {
     if (tokens.size() < 2 || tokens[0] != "#")
         return;
@@ -289,7 +290,8 @@ inline std::string rewrite(const std::string& source, bool vertexStage)
             const auto resolved = defines.find(declaration.location);
             const std::string location = resolved == defines.end() ? declaration.location : resolved->second;
             stage_varying varying{ declaration, "xr_v2p_" + location, conditionals };
-            output += declaration.direction + " vec4 " + varying.interface_name + "; " + declaration.type + " " + declaration.name + ";\n";
+            output += declaration.direction + " vec4 " + varying.interface_name + "; "
+                + declaration.type + " " + declaration.name + ";\n";
             varyings.push_back(std::move(varying));
             continue;
         }

@@ -100,50 +100,12 @@ void CALifeUpdateManager::update()
     update_scheduled(false);
 }
 
-void CALifeUpdateManager::jump_to_startup_level()
-{
-    cpcstr option = strstr(Core.Params, "-jump_to_level ");
-    if (!option)
-        return;
-
-    static bool performed = false;
-    if (performed)
-        return;
-    performed = true;
-
-    string64 level_name;
-    if (sscanf(option + xr_strlen("-jump_to_level "), "%63s", level_name) != 1)
-        return;
-
-    const auto& levels = ai().game_graph().header().levels();
-    for (auto it = levels.begin(); it != levels.end(); ++it)
-    {
-        if (!xr_strcmp((*it).second.name(), level_name))
-        {
-            Msg("* Jumping to level \"%s\" as requested on the command line", level_name);
-            jump_to_level(level_name);
-            return;
-        }
-    }
-    Msg("! -jump_to_level: there is no level \"%s\" in the game graph", level_name);
-}
-
 void CALifeUpdateManager::shedule_Update(u32 dt)
 {
     ScheduledBase::shedule_Update(dt);
 
     if (!initialized())
         return;
-
-    if (!m_startup_jump_done && Device.dwPrecacheFrame == 0 && Level().CurrentEntity())
-    {
-        if (++m_startup_jump_delay > 5)
-        {
-            m_startup_jump_done = true;
-            jump_to_startup_level();
-            return;
-        }
-    }
 
     if (!m_first_time && g_mt_config.test(mtALife))
     {

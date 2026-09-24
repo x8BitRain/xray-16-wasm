@@ -124,6 +124,11 @@ void CScriptProfiler::StartHookMode()
  */
 void CScriptProfiler::StartSamplingMode(u32 sampling_interval)
 {
+#if !XRAY_USE_LUAJIT
+    (void)sampling_interval;
+    Msg("[P] Cannot start scripts sampling profiler without LuaJIT");
+    return;
+#else
     if (m_active)
     {
         Msg("[P] Tried to start already active profiler, operation ignored");
@@ -150,6 +155,7 @@ void CScriptProfiler::StartSamplingMode(u32 sampling_interval)
     m_sampling_profile_interval = sampling_interval;
     m_profiler_type = CScriptProfilerType::Sampling;
     m_active = true;
+#endif
 }
 
 /*
@@ -176,8 +182,10 @@ void CScriptProfiler::Stop()
     case CScriptProfilerType::Sampling:
     {
         Msg("[P] Stopping scripts sampling profiler");
+#if XRAY_USE_LUAJIT
         // Detach profiler from luajit, stop operation will be ignore anyway if it is stopped/captured by another VM.
         LuaJitProfilerStop(lua());
+#endif
         break;
     }
     default:
@@ -503,7 +511,11 @@ void CScriptProfiler::OnDispose(lua_State* L)
     if (m_active && m_profiler_type == CScriptProfilerType::Sampling)
     {
         Msg("[P] Disposing sampling profiler dependencies");
+#if XRAY_USE_LUAJIT
         LuaJitProfilerStop(L);
+#else
+        (void)L;
+#endif
     }
 }
 
@@ -534,6 +546,7 @@ void CScriptProfiler::OnReinit(lua_State* L)
         return;
     case CScriptProfilerType::Sampling:
     {
+#if XRAY_USE_LUAJIT
         if (!LuaIsJitProfilerDefined())
         {
             Msg("[P] Cannot start scripts sampling profiler on reinit, jit.profiler module is not defined");
@@ -542,6 +555,10 @@ void CScriptProfiler::OnReinit(lua_State* L)
 
         Msg("[P] Re-init scripts sampling profiler - attach handler, interval: %d", m_sampling_profile_interval);
         LuaJitSamplingProfilerAttach(this, m_sampling_profile_interval);
+#else
+        (void)L;
+        Msg("[P] Cannot re-init scripts sampling profiler without LuaJIT");
+#endif
 
         return;
     }
@@ -643,12 +660,17 @@ int CScriptProfiler::LuaMemoryUsed(lua_State* L)
  */
 bool CScriptProfiler::LuaIsJitProfilerDefined()
 {
+#if XRAY_USE_LUAJIT
     // Safest and least invasive way to check it.
     // Other methods affect lua stack and may add interfere with VS extensions / other hooks / error callbacks.
     // We assume that we do not load JIT libs only if nojit parameter is provided.
     return !strstr(Core.Params, CScriptEngine::ARGUMENT_ENGINE_NOJIT);
+#else
+    return false;
+#endif
 }
 
+#if XRAY_USE_LUAJIT
 /*
  * Attach sampling profiling hooks.
  * With provided period report samples and store information in profiler for further reporting.
@@ -691,9 +713,7 @@ void CScriptProfiler::LuaJitProfilerStart(lua_State* L, cpcstr mode, luaJIT_prof
 {
     // Only single JIT profiler can exist and it will not attach with multiple states.
     // Also only VM started profiler can end it, be careful.
-#ifndef XRAY_NO_LUAJIT
     luaJIT_profile_start(L, mode, callback, data);
-#endif
 }
 
 /*
@@ -707,9 +727,7 @@ void CScriptProfiler::LuaJitProfilerStart(lua_State* L, cpcstr mode, luaJIT_prof
  */
 void CScriptProfiler::LuaJitProfilerStop(lua_State* L)
 {
-#ifndef XRAY_NO_LUAJIT
     luaJIT_profile_stop(L);
-#endif
 }
 
 /*
@@ -725,9 +743,6 @@ void CScriptProfiler::LuaJitProfilerStop(lua_State* L)
  */
 shared_str CScriptProfiler::LuaJitProfilerDumpToString(lua_State* L, cpcstr format, int depth)
 {
-#ifdef XRAY_NO_LUAJIT
-    return { "" };
-#else
     string2048 buffer;
     size_t length;
     cpcstr dump = luaJIT_profile_dumpstack(L, format, depth, &length);
@@ -737,7 +752,6 @@ shared_str CScriptProfiler::LuaJitProfilerDumpToString(lua_State* L, cpcstr form
     buffer[length] = 0;
 
     return { buffer };
-#endif
 }
 
 /*
@@ -753,15 +767,12 @@ shared_str CScriptProfiler::LuaJitProfilerDumpToString(lua_State* L, cpcstr form
  */
 std::pair<cpcstr, size_t> CScriptProfiler::LuaJitProfilerDump(lua_State* L, cpcstr format, int depth)
 {
-#ifdef XRAY_NO_LUAJIT
-    return { "", 0 };
-#else
     size_t length;
     cpcstr dump = luaJIT_profile_dumpstack(L, format, depth, &length);
 
     return { dump, length };
-#endif
 }
+#endif
 
 /*
  * @returns pair with debug information and status of debug information (whether was able to get info from stack)
